@@ -195,63 +195,91 @@ select.st-select {
   padding: 11px;
   margin-bottom: 10px;
   border: 1px solid #cbd5e1;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 16px;
   background: #f8fafc;
 }
 .btn-primary {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   border: none;
-  border-radius: 10px;
+  border-radius: 16px;
   background: #16a34a;
   color: #fff;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.2);
+  transition: transform 0.1s;
+}
+.btn-primary:active {
+  transform: scale(0.98);
 }
 
-/* Кнопки отчетов и таблицы */
+/* Крупные закругленные кнопки отчетов по центру */
 .rep-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
 }
 .btn-outline {
-  padding: 12px 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  background: #f8fafc;
-  color: var(--text);
-  font-size: 14px;
+  flex: 1;
+  max-width: 210px;
+  padding: 16px 14px;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 16px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 15px;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08);
+  transition: transform 0.1s;
 }
+.btn-outline:active {
+  transform: scale(0.97);
+  background: #dbeafe;
+}
+
 .rep-toolbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.btn-back,
+.btn-print {
+  flex: 1;
+  max-width: 190px;
+  border: none;
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.1s;
 }
 .btn-back {
   background: #e2e8f0;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
   color: var(--text);
 }
 .btn-print {
   background: var(--primary);
   color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+}
+.btn-back:active,
+.btn-print:active {
+  transform: scale(0.97);
 }
 
 .table-wrap {
