@@ -1,27 +1,4 @@
-const DAYS_SHORT = [
-  "",
-  "Понедельник",
-  "Вторник",
-  "Среда",
-  "Четверг",
-  "Пятница",
-  "Субота",
-  "Воскресенье",
-];
-const MONTHS_RU = [
-  "янв",
-  "фев",
-  "мар",
-  "апр",
-  "мая",
-  "июн",
-  "июл",
-  "авг",
-  "сен",
-  "окт",
-  "ноя",
-  "дек",
-];
+
 
 function switchTab(tabId, title, btn) {
   document
@@ -37,17 +14,17 @@ function switchTab(tabId, title, btn) {
 
 function getLocalToday() {
   const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function formatHumanDate(isoDate) {
   const parts = isoDate.split("-");
-  const day = Number(parts.at(2));
-  const month = MONTHS_RU.at(Number(parts.at(1)) - 1) || "";
-  return `${day} ${month}`;
+  return `${Number(parts.at(2))} ${
+    MONTHS_RU.at(Number(parts.at(1)) - 1) || ""
+  }`;
 }
 
 let secretKey = localStorage.getItem("app_pass");
@@ -82,10 +59,18 @@ async function loadData() {
 }
 
 function renderApp(data) {
-  const { user, employees, calendar, payments, summary, logs } = data;
+  const {
+    user,
+    perms,
+    allPerms,
+    employees,
+    calendar,
+    payments,
+    summary,
+    logs,
+  } = data;
   document.getElementById("user-info").textContent = `${user.name}`;
 
-  const canEditShift = user.role === "admin" || user.role === "manager";
   const empMap = {};
   employees.forEach((e) => (empMap[e.id] = e.name));
 
@@ -94,19 +79,15 @@ function renderApp(data) {
   const todayStr = getLocalToday();
   const recentCal = calendar.slice(-14);
 
-  if (!recentCal.length) {
-    calDiv.innerHTML = `<div class="panel">График пока пуст. Проверьте вкладку «Шаблон» в таблице.</div>`;
-  }
-
   recentCal.forEach((item) => {
     const isToday = item.date === todayStr;
-    const isLocked = item.status === "Отработано" && user.role !== "admin";
-    const stClass =
-      item.status === "Отработано"
-        ? "st-done"
-        : item.status === "Отмена"
-        ? "st-off"
-        : "st-plan";
+    const isDone = item.status === "Отработано";
+    const canEdit = isDone ? perms.edit_done : perms.edit_plan;
+    const stClass = isDone
+      ? "st-done"
+      : item.status === "Отмена"
+      ? "st-off"
+      : "st-plan";
 
     const card = document.createElement("div");
     card.className = `shift-card ${isToday ? "today" : ""} ${
@@ -120,7 +101,7 @@ function renderApp(data) {
       item.status === "Отмена" ? "Вых / Авария" : item.status
     }</div>`;
 
-    if (canEditShift && !isLocked) {
+    if (canEdit) {
       const empOpts = employees
         .map(
           (e) =>
@@ -132,7 +113,7 @@ function renderApp(data) {
       const stOpts = [
         "План",
         "Отмена",
-        ...(user.role === "admin" ? ["Отработано"] : []),
+        ...(perms.edit_done ? ["Отработано"] : []),
       ]
         .map(
           (s) =>
@@ -158,7 +139,7 @@ function renderApp(data) {
     calDiv.appendChild(card);
   });
 
-  if (user.role === "manager") {
+  if (!perms.view_fin) {
     document.getElementById("nav-finance").classList.add("hidden");
   } else {
     document.getElementById("nav-finance").classList.remove("hidden");
@@ -204,13 +185,37 @@ function renderApp(data) {
       : "<div class='sum-card'>Сводка появится после закрытия первой недели</div>";
   }
 
-  if (user.role === "admin") {
+  if (perms.add_pay) {
     document.getElementById("payment-card").classList.remove("hidden");
-    document.getElementById("nav-logs").classList.remove("hidden");
-
     document.getElementById("pay-emp").innerHTML = employees
       .map((e) => `<option value="${e.id}">${e.name}</option>`)
       .join("");
+  } else {
+    document.getElementById("payment-card").classList.add("hidden");
+  }
+
+  if (user.role === "admin" && allPerms) {
+    document.getElementById("nav-logs").classList.remove("hidden");
+    let tableHtml = `<table style="width:100%;font-size:13px;border-collapse:collapse;">
+      <tr style="border-bottom:1px solid #e2e8f0;color:#64748b;">
+        <th style="text-align:left;padding:6px 0;">Действие</th>
+        <th style="text-align:center;">Manager</th>
+        <th style="text-align:center;">Viewer</th>
+      </tr>`;
+    Object.keys(PERM_LABELS).forEach((k) => {
+      tableHtml += `<tr style="border-bottom:1px solid #f1f5f9;">
+        <td style="padding:8px 0;">${PERM_LABELS[k]}</td>
+        <td style="text-align:center;"><input type="checkbox" id="pm-manager-${k}" ${
+        allPerms.manager[k] ? "checked" : ""
+      } style="width:18px;height:18px;"></td>
+        <td style="text-align:center;"><input type="checkbox" id="pm-viewer-${k}" ${
+        allPerms.viewer[k] ? "checked" : ""
+      } style="width:18px;height:18px;"></td>
+      </tr>`;
+    });
+    tableHtml += `</table>`;
+    document.getElementById("perms-box").innerHTML = tableHtml;
+
     document.getElementById("logs-list").innerHTML = logs
       .slice()
       .reverse()
@@ -224,6 +229,25 @@ function renderApp(data) {
       )
       .join("");
   }
+}
+
+async function savePerms() {
+  const keys = Object.keys(PERM_LABELS);
+  const newPerms = { manager: {}, viewer: {} };
+  keys.forEach((k) => {
+    newPerms.manager[k] = document.getElementById(`pm-manager-${k}`).checked;
+    newPerms.viewer[k] = document.getElementById(`pm-viewer-${k}`).checked;
+  });
+  document.getElementById("loader").style.display = "block";
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      key: secretKey,
+      action: "save_perms",
+      perms: newPerms,
+    }),
+  });
+  await loadData();
 }
 
 async function saveShift(row) {
