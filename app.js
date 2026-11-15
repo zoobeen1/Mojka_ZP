@@ -80,12 +80,25 @@ async function loadData() {
 }
 
 function buildReportTable(items, periodKey, empMap) {
+function formatShortPeriod(rawVal, periodKey) {
+  const str = String(rawVal || "").trim();
+  if (periodKey === "period") {
+    const startPart = str.split("..").at(0).trim();
+    const parts = startPart.split("-");
+    if (parts.length === 3) {
+      return `${Number(parts.at(2))}.${parts.at(1)}`;
+    }
+  }
+  return str;
+}
+
+function buildReportTable(items, periodKey, empMap) {
   if (!items || !items.length) {
     return "<div style='color:#64748b;font-size:14px;'>Пока нет закрытых периодов</div>";
   }
   const rowsHtml = items.slice().reverse().map(r => `
     <tr>
-      <td><b>${r[periodKey]}</b></td>
+      <td><b>${formatShortPeriod(r[periodKey], periodKey)}</b></td>
       <td>${empMap[r.empId] || r.empId}</td>
       <td>${r.shifts}</td>
       <td>${r.earned}</td>
@@ -112,6 +125,7 @@ function buildReportTable(items, periodKey, empMap) {
     </div>
   `;
 }
+
 function renderApp(data) {
   const { user, perms, allPerms, employees, calendar, payments, summary, monthly, logs } = data;
   document.getElementById("user-info").textContent = `${user.name}`;
