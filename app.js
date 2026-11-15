@@ -8,6 +8,14 @@ function switchTab(tabId, title, btn) {
   document.getElementById(`tab-${tabId}`).classList.remove("hidden");
   btn.classList.add("active");
   document.getElementById("page-title").textContent = title;
+  if (tabId === "finance") showFinSub("main");
+}
+
+function showFinSub(sub) {
+  document.getElementById("fin-main").classList.add("hidden");
+  document.getElementById("fin-weekly").classList.add("hidden");
+  document.getElementById("fin-monthly").classList.add("hidden");
+  document.getElementById(`fin-${sub}`).classList.remove("hidden");
 }
 
 function getLocalToday() {
@@ -54,6 +62,46 @@ async function loadData() {
     alert("Ошибка соединения с таблицей");
   }
   document.getElementById("loader").style.display = "none";
+}
+
+function buildReportTable(items, periodKey, empMap) {
+  if (!items || !items.length) {
+    return "<div style='color:#64748b;font-size:14px;'>Пока нет закрытых периодов</div>";
+  }
+  const rowsHtml = items
+    .slice()
+    .reverse()
+    .map(
+      (r) => `
+    <tr>
+      <td><b>${r[periodKey]}</b></td>
+      <td>${empMap[r.empId] || r.empId}</td>
+      <td>${r.shifts}</td>
+      <td>${r.earned}</td>
+      <td>${r.paid}</td>
+      <td><b>${r.debt}</b></td>
+    </tr>
+  `
+    )
+    .join("");
+
+  return `
+    <div class="table-wrap">
+      <table class="rep-table">
+        <thead>
+          <tr>
+            <th>Период</th>
+            <th>Сотрудник</th>
+            <th>Смен</th>
+            <th>Начисл.</th>
+            <th>Выпл.</th>
+            <th>Долг</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 function renderApp(data) {
@@ -165,44 +213,16 @@ function renderApp(data) {
       `;
     });
 
-    const sumDiv = document.getElementById("summary-list");
-    sumDiv.innerHTML = summary.length
-      ? summary
-          .slice()
-          .reverse()
-          .map(
-            (s) => `
-      <div class="sum-card">
-        <div><b>${s.period}</b> — <b>${empMap[s.empId] || s.empId}</b></div>
-        <div>Смен: ${s.shifts} · Начислено: ${s.earned} · Выплачено: ${
-              s.paid
-            } · Долг: <b>${s.debt}</b></div>
-      </div>
-    `
-          )
-          .join("")
-      : "<div class='sum-card'>Сводка появится после закрытия первой недели</div>";
-
-    const monDiv = document.getElementById("monthly-list");
-    if (monDiv) {
-      monDiv.innerHTML =
-        monthly && monthly.length
-          ? monthly
-              .slice()
-              .reverse()
-              .map(
-                (m) => `
-        <div class="sum-card">
-          <div><b>${m.month}</b> — <b>${empMap[m.empId] || m.empId}</b></div>
-          <div>Смен: ${m.shifts} · Заработано: ${m.earned} · Выплачено: ${
-                  m.paid
-                } · Долг: <b>${m.debt}</b></div>
-        </div>
-      `
-              )
-              .join("")
-          : "<div class='sum-card'>Отчет появится после закрытия первого месяца</div>";
-    }
+    document.getElementById("summary-list").innerHTML = buildReportTable(
+      summary,
+      "period",
+      empMap
+    );
+    document.getElementById("monthly-list").innerHTML = buildReportTable(
+      monthly,
+      "month",
+      empMap
+    );
   }
 
   if (perms.add_pay) {

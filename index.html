@@ -30,31 +30,66 @@
       <div id="tab-schedule" class="tab-view"></div>
 
       <div id="tab-finance" class="tab-view hidden">
-        <div class="panel">
-          <h3>Текущий долг по зарплате</h3>
-          <div id="balance-list"></div>
+        <div id="fin-main">
+          <div class="panel">
+            <h3>Текущий долг по зарплате</h3>
+            <div id="balance-list"></div>
+          </div>
+          <div class="panel hidden" id="payment-card">
+            <h3>Выплата из кассы</h3>
+            <select id="pay-emp" class="field"></select>
+            <input type="date" id="pay-date" class="field" />
+            <input
+              type="number"
+              id="pay-amount"
+              class="field"
+              placeholder="Сумма выплаты"
+            />
+            <button class="btn-primary" onclick="addPayment()">
+              Записать выплату
+            </button>
+          </div>
+          <div class="panel">
+            <h3>Отчеты и архив</h3>
+            <div class="rep-grid">
+              <button class="btn-outline" onclick="showFinSub('weekly')">
+                📊 За неделю
+              </button>
+              <button class="btn-outline" onclick="showFinSub('monthly')">
+                📆 За месяц
+              </button>
+            </div>
+          </div>
         </div>
-        <div class="panel hidden" id="payment-card">
-          <h3>Выплата из кассы</h3>
-          <select id="pay-emp" class="field"></select>
-          <input type="date" id="pay-date" class="field" />
-          <input
-            type="number"
-            id="pay-amount"
-            class="field"
-            placeholder="Сумма выплаты"
-          />
-          <button class="btn-primary" onclick="addPayment()">
-            Записать выплату
-          </button>
+
+        <div id="fin-weekly" class="hidden">
+          <div class="rep-toolbar no-print">
+            <button class="btn-back" onclick="showFinSub('main')">
+              ← Назад
+            </button>
+            <button class="btn-print" onclick="window.print()">
+              🖨️ Печать
+            </button>
+          </div>
+          <div class="panel print-area">
+            <h3>Отчет по закрытым неделям</h3>
+            <div id="summary-list"></div>
+          </div>
         </div>
-        <div class="panel">
-          <h3>Закрытые недели</h3>
-          <div id="summary-list"></div>
-        </div>
-        <div class="panel">
-          <h3>Отчеты за месяц</h3>
-          <div id="monthly-list"></div>
+
+        <div id="fin-monthly" class="hidden">
+          <div class="rep-toolbar no-print">
+            <button class="btn-back" onclick="showFinSub('main')">
+              ← Назад
+            </button>
+            <button class="btn-print" onclick="window.print()">
+              🖨️ Печать
+            </button>
+          </div>
+          <div class="panel print-area">
+            <h3>Отчет по закрытым месяцам</h3>
+            <div id="monthly-list"></div>
+          </div>
         </div>
       </div>
 
