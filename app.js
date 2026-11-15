@@ -1,5 +1,3 @@
-
-
 function switchTab(tabId, title, btn) {
   document
     .querySelectorAll(".tab-view")
@@ -196,6 +194,8 @@ function renderApp(data) {
 
   if (user.role === "admin" && allPerms) {
     document.getElementById("nav-logs").classList.remove("hidden");
+    document.getElementById("nav-perms").classList.remove("hidden");
+
     let tableHtml = `<table style="width:100%;font-size:13px;border-collapse:collapse;">
       <tr style="border-bottom:1px solid #e2e8f0;color:#64748b;">
         <th style="text-align:left;padding:6px 0;">Действие</th>
