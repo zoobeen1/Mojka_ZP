@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>График смен и ЗП</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Смены и ЗП" />
+    <link rel="apple-touch-icon" href="https://flaticon.com" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: #f0f2f5;
+        margin: 0;
+        padding: 12px;
+        color: #1c1e21;
+      }
+      .container {
+        max-width: 540px;
+        margin: 0 auto;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .user-badge {
+        font-size: 13px;
+        background: #e4e6eb;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-weight: 600;
+      }
+      .card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      }
+      h2 {
+        margin: 0 0 12px 0;
+        font-size: 18px;
+      }
+      .day-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+        gap: 8px;
+      }
+      .day-row:last-child {
+        border-bottom: none;
+      }
+      .day-row.today {
+        background: #f0f7ff;
+        margin: 0 -14px;
+        padding: 10px 14px;
+        border-left: 4px solid #1967d2;
+      }
+      .day-info {
+        min-width: 95px;
+      }
+      .day-date {
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .day-name {
+        font-size: 12px;
+        color: #1967d2;
+        font-weight: 600;
+      }
+      .day-controls {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+        justify-content: flex-end;
+      }
+      select.inline-select {
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid #ccd0d5;
+        font-size: 14px;
+        background: #fff;
+        font-weight: 600;
+      }
+      .status-pill {
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+      .st-plan {
+        background: #e8f0fe;
+        color: #1967d2;
+      }
+      .st-done {
+        background: #e6f4ea;
+        color: #137333;
+      }
+      .st-off {
+        background: #fce8e6;
+        color: #c5221f;
+      }
+      .bal-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 15px;
+      }
+      .bal-debt {
+        font-weight: 700;
+        color: #d93025;
+      }
+      .bal-debt.zero {
+        color: #188038;
+      }
+      .sum-item {
+        font-size: 13px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      input,
+      select.full {
+        width: 100%;
+        padding: 10px;
+        margin: 6px 0 12px 0;
+        border: 1px solid #ccd0d5;
+        border-radius: 8px;
+        box-sizing: border-box;
+        font-size: 16px;
+      }
+      .btn {
+        border: none;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-green {
+        background: #188038;
+        color: #fff;
+        width: 100%;
+      }
+      .btn-logout {
+        background: none;
+        color: #65676b;
+        font-size: 13px;
+        text-decoration: underline;
+        border: none;
+        cursor: pointer;
+      }
+      .log-item {
+        font-size: 12px;
+        color: #555;
+        padding: 6px 0;
+        border-bottom: 1px solid #f5f5f5;
+      }
+      #loader {
+        text-align: center;
+        padding: 10px;
+        color: #1967d2;
+        font-weight: 600;
+        display: none;
+      }
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <span class="user-badge" id="user-info">Загрузка...</span>
+        <button class="btn-logout" onclick="logout()">Сменить пароль</button>
+      </div>
+      <div id="loader">Обновление данных...</div>
+
+      <div class="card">
+        <h2>График выходов</h2>
+        <div id="calendar-list"></div>
+      </div>
+
+      <div class="card" id="balance-card">
+        <h2>Текущий долг по ЗП</h2>
+        <div id="balance-list"></div>
+      </div>
+
+      <div class="card hidden" id="payment-card">
+        <h2>Записать выплату из кассы</h2>
+        <select id="pay-emp" class="full"></select>
+        <input type="date" id="pay-date" class="full" />
+        <input
+          type="number"
+          id="pay-amount"
+          class="full"
+          placeholder="Сумма выплаты"
+        />
+        <button class="btn btn-green" onclick="addPayment()">
+          Провести выплату
+        </button>
+      </div>
+
+      <div class="card" id="summary-card">
+        <h2>Еженедельная сводка</h2>
+        <div id="summary-list"></div>
+      </div>
+
+      <div class="card hidden" id="logs-card">
+        <h2>Журнал изменений</h2>
+        <div id="logs-list"></div>
+      </div>
+    </div>
+    <script>
+      const API_URL =
+        "https://script.google.com/macros/s/AKfycbwoiLFR1V6EYyF06lTTGbwyWSwMDQE4dqaR9eALQA9nJ_0UufdP2-53RcEhPAk5Cs79/exec";
+      const DAYS_RU = ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+
+      function getLocalToday() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+
+      let secretKey = localStorage.getItem("app_pass");
+      if (!secretKey) {
+        secretKey = prompt("Введите ваш пароль доступа:");
+        if (secretKey) localStorage.setItem("app_pass", secretKey);
+      }
+
+      document.getElementById("pay-date").value = getLocalToday();
+
+      function logout() {
+        localStorage.removeItem("app_pass");
+        location.reload();
+      }
+
+      async function loadData() {
+        if (!secretKey) return;
+        document.getElementById("loader").style.display = "block";
+        try {
+          const res = await fetch(
+            `${API_URL}?key=${encodeURIComponent(secretKey)}`
+          );
+          const data = await res.json();
+          if (data.error) {
+            alert(data.error);
+            logout();
+            return;
+          }
+          renderApp(data);
+        } catch (e) {
+          alert("Ошибка соединения с таблицей");
+        }
+        document.getElementById("loader").style.display = "none";
+      }
+
+      function renderApp(data) {
+        const { user, employees, calendar, payments, summary, logs } = data;
+        document.getElementById(
+          "user-info"
+        ).textContent = `${user.name} (${user.role})`;
+
+        const canEditShift = user.role === "admin" || user.role === "manager";
+        const empMap = {};
+        employees.forEach((e) => (empMap[e.id] = e.name));
+
+        const calDiv = document.getElementById("calendar-list");
+        calDiv.innerHTML = "";
+        const todayStr = getLocalToday();
+        const recentCal = calendar.slice(-14);
+
+        recentCal.forEach((item) => {
+          const isToday = item.date === todayStr;
+          const isLocked =
+            item.status === "Отработано" && user.role !== "admin";
+          const row = document.createElement("div");
+          row.className = `day-row ${isToday ? "today" : ""}`;
+
+          let empControl = `<b>${empMap[item.empId] || item.empId}</b>`;
+          let statusControl = `<span class="status-pill ${
+            item.status === "Отработано"
+              ? "st-done"
+              : item.status === "Отмена"
+              ? "st-off"
+              : "st-plan"
+          }">${item.status}</span>`;
+
+          if (canEditShift && !isLocked) {
+            const empOpts = employees
+              .map(
+                (e) =>
+                  `<option value="${e.id}" ${
+                    e.id === item.empId ? "selected" : ""
+                  }>${e.name}</option>`
+              )
+              .join("");
+            const stOpts = [
+              "План",
+              "Отмена",
+              ...(user.role === "admin" ? ["Отработано"] : []),
+            ]
+              .map(
+                (s) =>
+                  `<option value="${s}" ${
+                    s === item.status ? "selected" : ""
+                  }>${s === "Отмена" ? "Вых / Авария" : s}</option>`
+              )
+              .join("");
+
+            empControl = `<select class="inline-select" id="emp-${item.row}" onchange="saveShift(${item.row})">${empOpts}</select>`;
+            statusControl = `<select class="inline-select" id="st-${item.row}" onchange="saveShift(${item.row})">${stOpts}</select>`;
+          }
+
+          row.innerHTML = `
+        <div class="day-info">
+          <div class="day-date">${item.date.slice(5)} (${
+            DAYS_RU[item.dow]
+          })</div>
+          <div class="day-name">${isToday ? "Сегодня" : ""}</div>
+        </div>
+        <div class="day-controls">${empControl} ${statusControl}</div>
+      `;
+          calDiv.appendChild(row);
+        });
+
+        if (user.role === "manager") {
+          document.getElementById("balance-card").classList.add("hidden");
+          document.getElementById("summary-card").classList.add("hidden");
+        } else {
+          document.getElementById("balance-card").classList.remove("hidden");
+          document.getElementById("summary-card").classList.remove("hidden");
+
+          const stats = {};
+          employees.forEach((e) => (stats[e.id] = { earned: 0, paid: 0 }));
+
+          calendar.forEach((c) => {
+            if (c.status === "Отработано" && stats[c.empId]) {
+              stats[c.empId].earned += c.rate;
+            }
+          });
+          payments.forEach((p) => {
+            if (stats[p.empId]) stats[p.empId].paid += p.amount;
+          });
+
+          const balDiv = document.getElementById("balance-list");
+          balDiv.innerHTML = "";
+          employees.forEach((e) => {
+            const debt = stats[e.id].earned - stats[e.id].paid;
+            balDiv.innerHTML += `
+          <div class="bal-row">
+            <span>${e.name}</span>
+            <span class="bal-debt ${
+              debt <= 0 ? "zero" : ""
+            }">Долг: ${debt}</span>
+          </div>
+        `;
+          });
+
+          const sumDiv = document.getElementById("summary-list");
+          sumDiv.innerHTML = summary.length
+            ? summary
+                .slice()
+                .reverse()
+                .map(
+                  (s) => `
+        <div class="sum-item">
+          <b>${s.period}</b> — ${empMap[s.empId] || s.empId}: смен <b>${
+                    s.shifts
+                  }</b>, начислено <b>${s.earned}</b>, выплачено <b>${
+                    s.paid
+                  }</b>, долг на конец: <b>${s.debt}</b>
+        </div>
+      `
+                )
+                .join("")
+            : "<div class='sum-item'>Сводка появится после закрытия первой недели</div>";
+        }
+
+        if (user.role === "admin") {
+          document.getElementById("payment-card").classList.remove("hidden");
+          document.getElementById("logs-card").classList.remove("hidden");
+
+          document.getElementById("pay-emp").innerHTML = employees
+            .map((e) => `<option value="${e.id}">${e.name}</option>`)
+            .join("");
+          document.getElementById("logs-list").innerHTML = logs
+            .slice()
+            .reverse()
+            .map(
+              (l) =>
+                `<div class="log-item"><b>${l.time}</b> [${l.who}]: ${l.action}</div>`
+            )
+            .join("");
+        }
+      }
+
+      async function saveShift(row) {
+        const empId = document.getElementById(`emp-${row}`).value;
+        const status = document.getElementById(`st-${row}`).value;
+        document.getElementById("loader").style.display = "block";
+        await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            key: secretKey,
+            action: "update_shift",
+            row,
+            empId,
+            status,
+          }),
+        });
+        await loadData();
+      }
+
+      async function addPayment() {
+        const empId = document.getElementById("pay-emp").value;
+        const date = document.getElementById("pay-date").value;
+        const amount = Number(document.getElementById("pay-amount").value);
+        if (!amount || amount <= 0) return alert("Введите сумму");
+        document.getElementById("loader").style.display = "block";
+        await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            key: secretKey,
+            action: "add_payment",
+            empId,
+            date,
+            amount,
+          }),
+        });
+        document.getElementById("pay-amount").value = "";
+        await loadData();
+      }
+
+      loadData();
+    </script>
+  </body>
+</html>
