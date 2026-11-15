@@ -1,0 +1,257 @@
+const DAYS_SHORT = ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const MONTHS_RU = [
+  "янв",
+  "фев",
+  "мар",
+  "апр",
+  "мая",
+  "июн",
+  "июл",
+  "авг",
+  "сен",
+  "окт",
+  "ноя",
+  "дек",
+];
+
+function switchTab(tabId, title, btn) {
+  document
+    .querySelectorAll(".tab-view")
+    .forEach((el) => el.classList.add("hidden"));
+  document
+    .querySelectorAll(".nav-item")
+    .forEach((el) => el.classList.remove("active"));
+  document.getElementById(`tab-${tabId}`).classList.remove("hidden");
+  btn.classList.add("active");
+  document.getElementById("page-title").textContent = title;
+}
+
+function getLocalToday() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatHumanDate(isoDate) {
+  const parts = isoDate.split("-");
+  const day = Number(parts.at(2));
+  const month = MONTHS_RU.at(Number(parts.at(1)) - 1) || "";
+  return `${day} ${month}`;
+}
+
+let secretKey = localStorage.getItem("app_pass");
+if (!secretKey) {
+  secretKey = prompt("Введите ваш пароль доступа:");
+  if (secretKey) localStorage.setItem("app_pass", secretKey);
+}
+
+document.getElementById("pay-date").value = getLocalToday();
+
+function logout() {
+  localStorage.removeItem("app_pass");
+  location.reload();
+}
+
+async function loadData() {
+  if (!secretKey) return;
+  document.getElementById("loader").style.display = "block";
+  try {
+    const res = await fetch(`${API_URL}?key=${encodeURIComponent(secretKey)}`);
+    const data = await res.json();
+    if (data.error) {
+      alert(data.error);
+      logout();
+      return;
+    }
+    renderApp(data);
+  } catch (e) {
+    alert("Ошибка соединения с таблицей");
+  }
+  document.getElementById("loader").style.display = "none";
+}
+
+function renderApp(data) {
+  const { user, employees, calendar, payments, summary, logs } = data;
+  document.getElementById("user-info").textContent = `${user.name}`;
+
+  const canEditShift = user.role === "admin" || user.role === "manager";
+  const empMap = {};
+  employees.forEach((e) => (empMap[e.id] = e.name));
+
+  const calDiv = document.getElementById("tab-schedule");
+  calDiv.innerHTML = "";
+  const todayStr = getLocalToday();
+  const recentCal = calendar.slice(-14);
+
+  if (!recentCal.length) {
+    calDiv.innerHTML = `<div class="panel">График пока пуст. Проверьте вкладку «Шаблон» в таблице.</div>`;
+  }
+
+  recentCal.forEach((item) => {
+    const isToday = item.date === todayStr;
+    const isLocked = item.status === "Отработано" && user.role !== "admin";
+    const stClass =
+      item.status === "Отработано"
+        ? "st-done"
+        : item.status === "Отмена"
+        ? "st-off"
+        : "st-plan";
+
+    const card = document.createElement("div");
+    card.className = `shift-card ${isToday ? "today" : ""} ${
+      item.status === "Отмена" ? "is-off" : ""
+    }`;
+
+    let empHtml = `<div class="badge-view" style="background:#f1f5f9;">${
+      empMap[item.empId] || item.empId
+    }</div>`;
+    let stHtml = `<div class="badge-view ${stClass}">${
+      item.status === "Отмена" ? "Вых / Авария" : item.status
+    }</div>`;
+
+    if (canEditShift && !isLocked) {
+      const empOpts = employees
+        .map(
+          (e) =>
+            `<option value="${e.id}" ${e.id === item.empId ? "selected" : ""}>${
+              e.name
+            }</option>`
+        )
+        .join("");
+      const stOpts = [
+        "План",
+        "Отмена",
+        ...(user.role === "admin" ? ["Отработано"] : []),
+      ]
+        .map(
+          (s) =>
+            `<option value="${s}" ${s === item.status ? "selected" : ""}>${
+              s === "Отмена" ? "Вых / Авария" : s
+            }</option>`
+        )
+        .join("");
+
+      empHtml = `<select class="clean-select" id="emp-${item.row}" onchange="saveShift(${item.row})">${empOpts}</select>`;
+      stHtml = `<select class="st-select ${stClass}" id="st-${item.row}" onchange="saveShift(${item.row})">${stOpts}</select>`;
+    }
+
+    card.innerHTML = `
+      <div class="date-head">
+        <span class="date-main">${
+          isToday ? '<span class="today-dot"></span>' : ""
+        }${formatHumanDate(item.date)}</span>
+        <span class="date-dow">${DAYS_SHORT.at(item.dow) || ""}</span>
+      </div>
+      <div class="controls-box">${empHtml}${stHtml}</div>
+    `;
+    calDiv.appendChild(card);
+  });
+
+  if (user.role === "manager") {
+    document.getElementById("nav-finance").classList.add("hidden");
+  } else {
+    document.getElementById("nav-finance").classList.remove("hidden");
+
+    const stats = {};
+    employees.forEach((e) => (stats[e.id] = { earned: 0, paid: 0 }));
+    calendar.forEach((c) => {
+      if (c.status === "Отработано" && stats[c.empId])
+        stats[c.empId].earned += c.rate;
+    });
+    payments.forEach((p) => {
+      if (stats[p.empId]) stats[p.empId].paid += p.amount;
+    });
+
+    const balDiv = document.getElementById("balance-list");
+    balDiv.innerHTML = "";
+    employees.forEach((e) => {
+      const debt = stats[e.id].earned - stats[e.id].paid;
+      balDiv.innerHTML += `
+        <div class="emp-bal">
+          <span class="emp-name">${e.name}</span>
+          <span class="debt-val ${debt <= 0 ? "ok" : ""}">${debt}</span>
+        </div>
+      `;
+    });
+
+    const sumDiv = document.getElementById("summary-list");
+    sumDiv.innerHTML = summary.length
+      ? summary
+          .slice()
+          .reverse()
+          .map(
+            (s) => `
+      <div class="sum-card">
+        <div><b>${s.period}</b> — <b>${empMap[s.empId] || s.empId}</b></div>
+        <div>Смен: ${s.shifts} · Начислено: ${s.earned} · Выплачено: ${
+              s.paid
+            } · Долг: <b>${s.debt}</b></div>
+      </div>
+    `
+          )
+          .join("")
+      : "<div class='sum-card'>Сводка появится после закрытия первой недели</div>";
+  }
+
+  if (user.role === "admin") {
+    document.getElementById("payment-card").classList.remove("hidden");
+    document.getElementById("nav-logs").classList.remove("hidden");
+
+    document.getElementById("pay-emp").innerHTML = employees
+      .map((e) => `<option value="${e.id}">${e.name}</option>`)
+      .join("");
+    document.getElementById("logs-list").innerHTML = logs
+      .slice()
+      .reverse()
+      .map(
+        (l) => `
+      <div class="log-row">
+        <div class="log-meta">${l.time} · ${l.who} (${l.source})</div>
+        <div>${l.action}</div>
+      </div>
+    `
+      )
+      .join("");
+  }
+}
+
+async function saveShift(row) {
+  const empId = document.getElementById(`emp-${row}`).value;
+  const status = document.getElementById(`st-${row}`).value;
+  document.getElementById("loader").style.display = "block";
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      key: secretKey,
+      action: "update_shift",
+      row,
+      empId,
+      status,
+    }),
+  });
+  await loadData();
+}
+
+async function addPayment() {
+  const empId = document.getElementById("pay-emp").value;
+  const date = document.getElementById("pay-date").value;
+  const amount = Number(document.getElementById("pay-amount").value);
+  if (!amount || amount <= 0) return alert("Введите сумму выплаты");
+  document.getElementById("loader").style.display = "block";
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      key: secretKey,
+      action: "add_payment",
+      empId,
+      date,
+      amount,
+    }),
+  });
+  document.getElementById("pay-amount").value = "";
+  await loadData();
+}
+
+loadData();
