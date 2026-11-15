@@ -65,6 +65,7 @@ function renderApp(data) {
     calendar,
     payments,
     summary,
+    monthly,
     logs,
   } = data;
   document.getElementById("user-info").textContent = `${user.name}`;
@@ -181,6 +182,27 @@ function renderApp(data) {
           )
           .join("")
       : "<div class='sum-card'>Сводка появится после закрытия первой недели</div>";
+
+    const monDiv = document.getElementById("monthly-list");
+    if (monDiv) {
+      monDiv.innerHTML =
+        monthly && monthly.length
+          ? monthly
+              .slice()
+              .reverse()
+              .map(
+                (m) => `
+        <div class="sum-card">
+          <div><b>${m.month}</b> — <b>${empMap[m.empId] || m.empId}</b></div>
+          <div>Смен: ${m.shifts} · Заработано: ${m.earned} · Выплачено: ${
+                  m.paid
+                } · Долг: <b>${m.debt}</b></div>
+        </div>
+      `
+              )
+              .join("")
+          : "<div class='sum-card'>Отчет появится после закрытия первого месяца</div>";
+    }
   }
 
   if (perms.add_pay) {
