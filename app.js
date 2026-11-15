@@ -46,6 +46,34 @@ function logout() {
   location.reload();
 }
 
+async function changePassword() {
+  const newPass = prompt("Введите новый пароль (минимум 3 символа):");
+  if (!newPass) return;
+  document.getElementById("loader").style.display = "block";
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        key: secretKey,
+        action: "change_pass",
+        newPass: newPass.trim(),
+      }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      alert(data.error);
+    } else {
+      secretKey = newPass.trim();
+      localStorage.setItem("app_pass", secretKey);
+      alert("Пароль успешно изменён!");
+      await loadData();
+    }
+  } catch (e) {
+    alert("Ошибка при смене пароля");
+  }
+  document.getElementById("loader").style.display = "none";
+}
+
 async function loadData() {
   if (!secretKey) return;
   document.getElementById("loader").style.display = "block";
