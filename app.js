@@ -79,7 +79,6 @@ async function loadData() {
   document.getElementById("loader").style.display = "none";
 }
 
-function buildReportTable(items, periodKey, empMap) {
 function formatShortPeriod(rawVal, periodKey) {
   const str = String(rawVal || "").trim();
   if (periodKey === "period") {
@@ -125,7 +124,6 @@ function buildReportTable(items, periodKey, empMap) {
     </div>
   `;
 }
-
 function renderApp(data) {
   const { user, perms, allPerms, employees, calendar, payments, summary, monthly, logs } = data;
   document.getElementById("user-info").textContent = `${user.name}`;
