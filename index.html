@@ -124,50 +124,38 @@
                 style="width: 100%; max-width: 100%"
                 onclick="toggleTxView(true)"
               >
-                📋 Все проводки (детально и печать)
+                📅 Сводный отчет по конкретной дате
               </button>
             </div>
           </div>
 
-          <!-- ОТДЕЛЬНЫЙ ЭКРАН ВСЕХ ПРОВОДОК -->
+          <!-- ОТДЕЛЬНЫЙ ЭКРАН СВОДКИ ПО ВЫБРАННОЙ ДАТЕ -->
           <div id="cash-tx-view" class="hidden">
             <div class="rep-toolbar no-print">
               <button class="btn-back" onclick="toggleTxView(false)">
                 ← Назад
               </button>
               <button class="btn-print" onclick="window.print()">
-                🖨️ Печать списка
+                🖨️ Печать
               </button>
             </div>
-            <div class="panel">
+            <div class="panel print-area">
               <div
                 style="
                   display: flex;
                   justify-content: space-between;
                   align-items: center;
-                  margin-bottom: 10px;
+                  margin-bottom: 12px;
                 "
               >
-                <h3 style="margin: 0">Журнал проводок</h3>
+                <h3 style="margin: 0">Сводка за дату</h3>
                 <select
-                  id="tx-filter"
-                  class="mini-select no-print"
-                  onchange="renderTxList()"
-                >
-                  <option value="all" selected>Все операции</option>
-                  <option value="pending">Только: Ожидает</option>
-                  <option value="box">Сборы с боксов</option>
-                  <option value="exp">Расходы кассы</option>
-                  <option value="zp">Выплаты ЗП</option>
-                </select>
+                  id="tx-date-select"
+                  class="mini-select"
+                  onchange="renderDateReport()"
+                ></select>
               </div>
-              <div
-                style="font-size: 12px; color: #64748b; margin-bottom: 8px"
-                class="no-print"
-              >
-                Нажмите на любую строку, чтобы открыть и распечатать её отдельно
-              </div>
-              <div id="tx-list-box"></div>
+              <div id="date-report-box"></div>
             </div>
           </div>
         </div>
@@ -335,34 +323,6 @@
         <div class="modal-foot">
           <button class="btn-primary" onclick="submitExpModal()">
             Записать расход
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ОКНО 3: КАРТОЧКА ОДНОЙ ПРОВОДКИ ДЛЯ ПЕЧАТИ -->
-    <div id="tx-single-modal" class="modal-overlay hidden">
-      <div class="modal-window" style="max-width: 400px">
-        <div class="modal-head no-print">
-          <div style="font-weight: 800; font-size: 16px">
-            Квитанция проводки
-          </div>
-          <button
-            class="logout-btn"
-            style="font-size: 22px; padding: 4px 8px"
-            onclick="closeSingleTx()"
-          >
-            ✕
-          </button>
-        </div>
-        <div class="modal-body" id="tx-single-body" style="padding: 18px"></div>
-        <div class="modal-foot no-print">
-          <button
-            class="btn-primary"
-            style="background: #2563eb"
-            onclick="window.print()"
-          >
-            🖨️ Распечатать проводку
           </button>
         </div>
       </div>

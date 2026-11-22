@@ -36,7 +36,7 @@ function switchFinMode(mode) {
 function toggleTxView(showTx) {
   document.getElementById("cash-main-view").classList.toggle("hidden", showTx);
   document.getElementById("cash-tx-view").classList.toggle("hidden", !showTx);
-  if (showTx) renderTxList();
+  if (showTx) initDateReport();
 }
 
 function showFinSub(sub) {
@@ -409,126 +409,104 @@ async function closeCashBatch(netAmount, compAmount) {
 }
 
 /* ЖУРНАЛ ВСЕХ ПРОВОДОК И ПЕЧАТЬ ОДНОЙ ПРОВОДКИ */
-function renderTxList() {
+/* СВОДНЫЙ ОТЧЕТ ПО ВЫБРАННОЙ ДАТЕ */
+function initDateReport() {
   if (!APP_DATA) return;
-  const filter = document.getElementById("tx-filter").value;
-  const empMap = {};
-  (APP_DATA.employees || []).forEach((e) => (empMap[e.id] = e.name));
-
-  const list = [];
+  const datesSet = new Set();
   (APP_DATA.cash || []).forEach((c) => {
-    list.push({
-      cat: "box",
-      date: c.date,
-      title: `Сбор: ${c.box}`,
-      amount: `+${c.sum} грн`,
-      color: "#16a34a",
-      note: "",
-      who: c.who,
-      pending: c.pending,
-    });
+    if (!c.pending) datesSet.add(c.date);
+  });
+  (APP_DATA.cashExp || []).forEach((e) => {
+    if (!e.pending) datesSet.add(e.date);
+  });
+  (APP_DATA.payments || []).forEach((p) => {
+    if (!p.pending) datesSet.add(p.date);
   });
 
+  const sortedDates = Array.from(datesSet).sort().reverse();
+  const sel = document.getElementById("tx-date-select");
+  if (!sortedDates.length) {
+    sel.innerHTML = `<option value="">Нет закрытых дат</option>`;
+    document.getElementById("date-report-box").innerHTML =
+      "<div style='color:#64748b;font-size:14px;'>Пока нет отправленных сборов</div>";
+    return;
+  }
+  sel.innerHTML = sortedDates
+    .map((d) => `<option value="${d}">${formatHumanDate(d)} (${d})</option>`)
+    .join("");
+  renderDateReport();
+}
+
+function renderDateReport() {
+  const targetDate = document.getElementById("tx-date-select").value;
+  if (!targetDate || !APP_DATA) return;
+
+  const boxSums = {};
+  CASH_BOXES.forEach((b) => (boxSums[b] = 0));
+  let totalBoxes = 0;
+
+  (APP_DATA.cash || []).forEach((c) => {
+    if (!c.pending && c.date === targetDate) {
+      if (boxSums[c.box] !== undefined) boxSums[c.box] += c.sum;
+      else boxSums[c.box] = (boxSums[c.box] || 0) + c.sum;
+      totalBoxes += c.sum;
+    }
+  });
+
+  let termSum = 0,
+    matSum = 0,
+    zpSum = 0;
+  const notes = [];
   (APP_DATA.cashExp || []).forEach((e) => {
-    list.push({
-      cat: "exp",
-      date: e.date,
-      title: e.type,
-      amount: `−${e.amount} грн`,
-      color: "#dc2626",
-      note: e.note,
-      who: e.who,
-      pending: e.pending,
-    });
+    if (!e.pending && e.date === targetDate) {
+      if (e.type.includes("Терминал")) termSum += e.amount;
+      else matSum += e.amount;
+      notes.push(`${e.type}: ${e.amount} грн ${e.note ? `(${e.note})` : ""}`);
+    }
   });
 
   (APP_DATA.payments || []).forEach((p) => {
-    list.push({
-      cat: "zp",
-      date: p.date,
-      title: `Выплата ЗП: ${empMap[p.empId] || p.empId}`,
-      amount: `−${p.amount} грн`,
-      color: "#dc2626",
-      note: "",
-      who: "Касса",
-      pending: p.pending,
-    });
+    if (!p.pending && p.date === targetDate) zpSum += p.amount;
   });
 
-  const filtered = list.reverse().filter((item) => {
-    if (filter === "pending") return item.pending;
-    if (filter === "all") return true;
-    return item.cat === filter;
-  });
+  const totalComp = termSum + matSum + zpSum;
+  const netSent = totalBoxes - totalComp;
 
-  ALL_TX_CACHE = filtered;
-  const box = document.getElementById("tx-list-box");
-  if (!filtered.length) {
-    box.innerHTML =
-      "<div style='color:#64748b;font-size:14px;'>Нет проводок по выбранному фильтру</div>";
-    return;
-  }
-
-  const rowsHtml = filtered
+  let html = Object.keys(boxSums)
     .map(
-      (t, idx) => `
-    <tr class="tx-row" onclick="openSingleTx(${idx})">
-      <td><b>${formatHumanDate(
-        t.date
-      )}</b><br><span style="font-size:10px;color:#64748b;">${
-        t.pending ? "Ожидает" : "Отправлено"
-      }</span></td>
-      <td>${t.title}${
-        t.note
-          ? `<br><span style="font-size:11px;color:#475569;">${t.note}</span>`
-          : ""
-      }</td>
-      <td style="color:${t.color};font-weight:800;white-space:nowrap;">${
-        t.amount
-      }</td>
-    </tr>
+      (b) => `
+    <div class="emp-bal" style="padding:6px 0;">
+      <span class="emp-name" style="font-size:14px;">${b}</span>
+      <span style="font-weight:700;font-size:14px;">${boxSums[b]} грн</span>
+    </div>
   `
     )
     .join("");
 
-  box.innerHTML = `
-    <div class="table-wrap">
-      <table class="rep-table">
-        <thead><tr><th>Дата</th><th>Операция</th><th>Сумма</th></tr></thead>
-        <tbody>${rowsHtml}</tbody>
-      </table>
+  html += `
+    <div class="emp-bal" style="border-top:1px solid #cbd5e1;margin-top:4px;padding-top:8px;">
+      <span style="font-weight:700;font-size:15px;">Всего с боксов</span>
+      <span style="font-weight:800;font-size:16px;">${totalBoxes} грн</span>
+    </div>
+    <div class="emp-bal" style="padding:6px 0;color:#dc2626;">
+      <span style="font-size:14px;">Компенсация в кассу (Терм: ${termSum}, Мат: ${matSum}, ЗП: ${zpSum})</span>
+      <span style="font-weight:700;font-size:15px;">−${totalComp} грн</span>
+    </div>
+    <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:10px;">
+      <span style="font-weight:800;font-size:16px;">ОТПРАВЛЕНО ЧИСТЫМИ</span>
+      <span class="debt-val ok" style="font-size:18px;">${netSent} грн</span>
     </div>
   `;
+
+  if (notes.length) {
+    html += `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:12px;color:#475569;"><b>Чеки и примечания за день:</b><br>• ${notes.join(
+      "<br>• "
+    )}</div>`;
+  }
+
+  document.getElementById("date-report-box").innerHTML = html;
 }
 
-function openSingleTx(idx) {
-  const t = ALL_TX_CACHE.at(idx);
-  if (!t) return;
-  document.body.classList.add("printing-single");
-  document.getElementById("tx-single-body").innerHTML = `
-    <div style="text-align:center;border-bottom:1px dashed #cbd5e1;padding-bottom:10px;margin-bottom:12px;">
-      <div style="font-size:12px;color:#64748b;">ФИНАНСОВАЯ ПРОВОДКА</div>
-      <div style="font-size:22px;font-weight:800;margin-top:4px;color:${
-        t.color
-      };">${t.amount}</div>
-    </div>
-    <div style="font-size:14px;line-height:1.7;">
-      <div><b>Дата:</b> ${t.date}</div>
-      <div><b>Операция:</b> ${t.title}</div>
-      <div><b>Статус:</b> ${
-        t.pending ? "Ожидает отправки" : "Отправлено (закрыто)"
-      }</div>
-      ${t.who ? `<div><b>Внёс:</b> ${t.who}</div>` : ""}
-      ${t.note ? `<div><b>Примечание / Чек:</b> ${t.note}</div>` : ""}
-    </div>
-  `;
-  document.getElementById("tx-single-modal").classList.remove("hidden");
-}
-
-function closeSingleTx() {
-  document.body.classList.remove("printing-single");
-  document.getElementById("tx-single-modal").classList.add("hidden");
-}
 function formatShortPeriod(rawVal, periodKey) {
   const str = String(rawVal || "").trim();
   if (periodKey === "period") {
