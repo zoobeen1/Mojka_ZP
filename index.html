@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Смены и Зарплата</title>
+    <title>Смены и Касса</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="style.css" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -38,65 +38,139 @@
       <div id="tab-schedule" class="tab-view"></div>
 
       <div id="tab-finance" class="tab-view hidden">
-        <div id="fin-main">
-          <div class="panel">
-            <h3>Текущий долг по зарплате</h3>
-            <div id="balance-list"></div>
-          </div>
-          <div class="panel hidden" id="payment-card">
-            <h3>Выплата из кассы</h3>
-            <select id="pay-emp" class="field"></select>
-            <input type="date" id="pay-date" class="field" />
-            <input
-              type="number"
-              id="pay-amount"
-              class="field"
-              placeholder="Сумма выплаты"
-            />
-            <button class="btn-primary" onclick="addPayment()">
-              Записать выплату
+        <div class="seg-bar no-print" id="fin-switcher">
+          <button
+            class="seg-btn active"
+            id="seg-cash"
+            onclick="switchFinMode('cash')"
+          >
+            💵 Касса
+          </button>
+          <button
+            class="seg-btn"
+            id="seg-salary"
+            onclick="switchFinMode('salary')"
+          >
+            💳 ЗП и долги
+          </button>
+        </div>
+
+        <!-- БЛОК КАССЫ -->
+        <div id="mode-cash">
+          <div class="panel no-print hidden" id="cash-add-box">
+            <button class="btn-primary" onclick="openCashModal()">
+              ➕ Внести инкассацию (таблица)
             </button>
           </div>
+
           <div class="panel">
-            <h3>Отчеты и архив</h3>
-            <div class="rep-grid">
-              <button class="btn-outline" onclick="showFinSub('weekly')">
-                📊 За неделю
-              </button>
-              <button class="btn-outline" onclick="showFinSub('monthly')">
-                📆 За месяц
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+              "
+            >
+              <h3 style="margin: 0">Сводка кассы</h3>
+              <select
+                id="cash-period"
+                class="mini-select no-print"
+                onchange="renderCashStats()"
+              >
+                <option value="today">За сегодня</option>
+                <option value="week">За неделю</option>
+                <option value="month" selected>За месяц</option>
+                <option value="all">За всё время</option>
+              </select>
+            </div>
+            <div id="cash-boxes-summary"></div>
+          </div>
+
+          <div class="panel">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+              "
+            >
+              <h3 style="margin: 0">Контроль купюр</h3>
+              <button
+                class="btn-print no-print"
+                style="padding: 6px 12px; font-size: 13px"
+                onclick="window.print()"
+              >
+                🖨️ Печать
               </button>
             </div>
+            <div id="cash-denoms-summary"></div>
           </div>
         </div>
 
-        <div id="fin-weekly" class="hidden">
-          <div class="rep-toolbar no-print">
-            <button class="btn-back" onclick="showFinSub('main')">
-              ← Назад
-            </button>
-            <button class="btn-print" onclick="window.print()">
-              🖨️ Печать
-            </button>
+        <!-- БЛОК ЗАРПЛАТЫ И ДОЛГОВ -->
+        <div id="mode-salary" class="hidden">
+          <div id="fin-main">
+            <div class="panel">
+              <h3>Текущий долг по зарплате</h3>
+              <div id="balance-list"></div>
+            </div>
+            <div class="panel hidden" id="payment-card">
+              <h3>Выплата из кассы</h3>
+              <select id="pay-emp" class="field"></select>
+              <input type="date" id="pay-date" class="field" />
+              <input
+                type="number"
+                id="pay-amount"
+                class="field"
+                placeholder="Сумма выплаты"
+              />
+              <button class="btn-primary" onclick="addPayment()">
+                Записать выплату
+              </button>
+            </div>
+            <div class="panel">
+              <h3>Отчеты по зарплате</h3>
+              <div class="rep-grid">
+                <button class="btn-outline" onclick="showFinSub('weekly')">
+                  📊 За неделю
+                </button>
+                <button class="btn-outline" onclick="showFinSub('monthly')">
+                  📆 За месяц
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="panel print-area">
-            <h3>Отчет по закрытым неделям</h3>
-            <div id="summary-list"></div>
-          </div>
-        </div>
 
-        <div id="fin-monthly" class="hidden">
-          <div class="rep-toolbar no-print">
-            <button class="btn-back" onclick="showFinSub('main')">
-              ← Назад
-            </button>
-            <button class="btn-print" onclick="window.print()">
-              🖨️ Печать
-            </button>
+          <div id="fin-weekly" class="hidden">
+            <div class="rep-toolbar no-print">
+              <button class="btn-back" onclick="showFinSub('main')">
+                ← Назад
+              </button>
+              <button class="btn-print" onclick="window.print()">
+                🖨️ Печать
+              </button>
+            </div>
+            <div class="panel print-area">
+              <h3>Отчет по закрытым неделям</h3>
+              <div id="summary-list"></div>
+            </div>
           </div>
-          <div class="panel print-area">
-            <h3>Отчет по закрытым месяцам</h3>
-            <div id="monthly-list"></div>
+
+          <div id="fin-monthly" class="hidden">
+            <div class="rep-toolbar no-print">
+              <button class="btn-back" onclick="showFinSub('main')">
+                ← Назад
+              </button>
+              <button class="btn-print" onclick="window.print()">
+                🖨️ Печать
+              </button>
+            </div>
+            <div class="panel print-area">
+              <h3>Отчет по закрытым месяцам</h3>
+              <div id="monthly-list"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -123,6 +197,42 @@
       </div>
     </div>
 
+    <!-- ОТДЕЛЬНОЕ ОКНО ВВОДА ИНКАССАЦИИ (ТАБЛИЦА) -->
+    <div id="cash-modal" class="modal-overlay hidden">
+      <div class="modal-window">
+        <div class="modal-head">
+          <div>
+            <div style="font-weight: 800; font-size: 17px">
+              Сбор кассы по боксам
+            </div>
+            <input
+              type="date"
+              id="cash-date"
+              class="mini-select"
+              style="margin-top: 4px"
+            />
+          </div>
+          <button
+            class="logout-btn"
+            style="font-size: 22px; padding: 4px 8px"
+            onclick="closeCashModal()"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="table-wrap">
+            <table class="calc-table" id="cash-calc-table"></table>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-primary" onclick="submitCashModal()">
+            Сохранить инкассацию
+          </button>
+        </div>
+      </div>
+    </div>
+
     <nav class="bottom-nav">
       <button
         class="nav-item active"
@@ -133,7 +243,7 @@
       <button
         class="nav-item"
         id="nav-finance"
-        onclick="switchTab('finance', 'Зарплата и долги', this)"
+        onclick="switchTab('finance', 'Финансы и касса', this)"
       >
         <span class="nav-ico">💳</span><span>Финансы</span>
       </button>

@@ -18,7 +18,7 @@ body {
   color: var(--text);
 }
 .container {
-  max-width: 520px;
+  max-width: 560px;
   margin: 0 auto;
 }
 .topbar {
@@ -199,6 +199,15 @@ select.st-select {
   font-size: 16px;
   background: #f8fafc;
 }
+.mini-select {
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #f8fafc;
+  color: var(--text);
+}
 .btn-primary {
   width: 100%;
   padding: 14px;
@@ -216,7 +225,32 @@ select.st-select {
   transform: scale(0.98);
 }
 
-/* Крупные закругленные кнопки отчетов по центру */
+/* Переключатель Касса / ЗП */
+.seg-bar {
+  display: flex;
+  background: #e2e8f0;
+  padding: 4px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  gap: 4px;
+}
+.seg-btn {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 10px;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+}
+.seg-btn.active {
+  background: #fff;
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 .rep-grid {
   display: flex;
   justify-content: center;
@@ -238,14 +272,7 @@ select.st-select {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08);
-  transition: transform 0.1s;
 }
-.btn-outline:active {
-  transform: scale(0.97);
-  background: #dbeafe;
-}
-
 .rep-toolbar {
   display: flex;
   justify-content: center;
@@ -266,7 +293,6 @@ select.st-select {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  transition: transform 0.1s;
 }
 .btn-back {
   background: #e2e8f0;
@@ -275,32 +301,132 @@ select.st-select {
 .btn-print {
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
-}
-.btn-back:active,
-.btn-print:active {
-  transform: scale(0.97);
 }
 
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .rep-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 13px;
   text-align: left;
 }
 .rep-table th {
   background: #f8fafc;
   color: var(--muted);
   font-weight: 700;
-  padding: 7px 5px;
+  padding: 7px 6px;
   border-bottom: 1px solid var(--border);
 }
 .rep-table td {
-  padding: 8px 5px;
+  padding: 8px 6px;
   border-bottom: 1px solid #f1f5f9;
+}
+
+/* Модальное окно калькулятора кассы (как в Google Таблице) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+.modal-window {
+  background: #fff;
+  width: 100%;
+  max-width: 680px;
+  max-height: 92vh;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #f8fafc;
+}
+.modal-body {
+  padding: 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+.modal-foot {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: #f8fafc;
+}
+
+.calc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 540px;
+}
+.calc-table th {
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-weight: 800;
+  padding: 7px 4px;
+  border: 1px solid #cbd5e1;
+  text-align: center;
+}
+.calc-table td {
+  border: 1px solid #cbd5e1;
+  padding: 4px;
+  text-align: center;
+}
+.calc-table td.box-col {
+  font-weight: 700;
+  text-align: left;
+  padding-left: 8px;
+  background: #f8fafc;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 78px;
+}
+.calc-input {
+  width: 48px;
+  padding: 6px 2px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  background: #fff;
+}
+.calc-input:focus {
+  border-color: var(--primary);
+  outline: none;
+  background: #eff6ff;
+}
+.row-sum {
+  font-weight: 800;
+  color: #0f172a;
+  background: #f1f5f9;
+  min-width: 62px;
+}
+.tot-money td {
+  background: #dcfce7;
+  color: #14532d;
+  font-weight: 800;
+  padding: 7px 4px;
+}
+.tot-bills td {
+  background: #fef9c3;
+  color: #713f12;
+  font-weight: 700;
+  padding: 6px 4px;
 }
 
 .log-row {
@@ -364,7 +490,6 @@ select.st-select {
   font-size: 19px;
 }
 
-/* Режим печати на принтер */
 @media print {
   body {
     background: #fff;
