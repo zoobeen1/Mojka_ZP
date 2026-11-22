@@ -518,3 +518,22 @@ select.st-select {
     font-size: 13px;
   }
 }
+.tx-row {
+  cursor: pointer;
+}
+.tx-row:hover {
+  background: #f8fafc;
+}
+body.printing-single .container {
+  display: none !important;
+}
+body.printing-single .modal-overlay {
+  position: static;
+  background: none;
+  padding: 0;
+}
+body.printing-single .modal-window {
+  box-shadow: none;
+  border: 1px solid #000;
+  max-width: 100%;
+}

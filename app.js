@@ -1,4 +1,5 @@
 let APP_DATA = null;
+let ALL_TX_CACHE = [];
 
 function switchTab(tabId, title, btn) {
   document
@@ -10,7 +11,10 @@ function switchTab(tabId, title, btn) {
   document.getElementById(`tab-${tabId}`).classList.remove("hidden");
   btn.classList.add("active");
   document.getElementById("page-title").textContent = title;
-  if (tabId === "finance") showFinSub("main");
+  if (tabId === "finance") {
+    showFinSub("main");
+    toggleTxView(false);
+  }
 }
 
 function switchFinMode(mode) {
@@ -26,6 +30,13 @@ function switchFinMode(mode) {
   document
     .getElementById("seg-salary")
     .classList.toggle("active", mode === "salary");
+  if (mode === "cash") toggleTxView(false);
+}
+
+function toggleTxView(showTx) {
+  document.getElementById("cash-main-view").classList.toggle("hidden", showTx);
+  document.getElementById("cash-tx-view").classList.toggle("hidden", !showTx);
+  if (showTx) renderTxList();
 }
 
 function showFinSub(sub) {
@@ -230,6 +241,7 @@ async function submitExpModal() {
 }
 function matchPeriod(item, period, todayStr, monDate, monthPrefix) {
   if (period === "pending") return Boolean(item.pending);
+  if (item.pending) return false;
   if (period === "all") return true;
   if (period === "today") return item.date === todayStr;
   if (period === "month") return item.date.startsWith(monthPrefix);
@@ -313,7 +325,9 @@ function renderCashStats() {
       <span style="font-weight:700;font-size:15px;">−${totalComp} грн</span>
     </div>
     <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:10px;">
-      <span style="font-weight:800;font-size:16px;">К ОТПРАВКЕ</span>
+      <span style="font-weight:800;font-size:16px;">${
+        period === "pending" ? "К ОТПРАВКЕ" : "ОТПРАВЛЕНО ЧИСТЫМИ"
+      }</span>
       <span class="debt-val ok" style="font-size:18px;">${netToSend} грн</span>
     </div>
   `;
@@ -332,7 +346,9 @@ function renderCashStats() {
 
   document.getElementById("cash-boxes-summary").innerHTML = boxHtml;
 
-  // Отрисовка движения по разменной кассе 4500 грн
+  const flowCard = document.getElementById("cash-flow-summary").parentElement;
+  flowCard.classList.toggle("hidden", period !== "pending");
+
   let flowHtml = `
     <div class="emp-bal" style="padding:6px 0;">
       <span style="font-size:14px;color:#64748b;">Норматив кассы (база)</span>
@@ -390,6 +406,128 @@ async function closeCashBatch(netAmount, compAmount) {
     }),
   });
   await loadData();
+}
+
+/* ЖУРНАЛ ВСЕХ ПРОВОДОК И ПЕЧАТЬ ОДНОЙ ПРОВОДКИ */
+function renderTxList() {
+  if (!APP_DATA) return;
+  const filter = document.getElementById("tx-filter").value;
+  const empMap = {};
+  (APP_DATA.employees || []).forEach((e) => (empMap[e.id] = e.name));
+
+  const list = [];
+  (APP_DATA.cash || []).forEach((c) => {
+    list.push({
+      cat: "box",
+      date: c.date,
+      title: `Сбор: ${c.box}`,
+      amount: `+${c.sum} грн`,
+      color: "#16a34a",
+      note: "",
+      who: c.who,
+      pending: c.pending,
+    });
+  });
+
+  (APP_DATA.cashExp || []).forEach((e) => {
+    list.push({
+      cat: "exp",
+      date: e.date,
+      title: e.type,
+      amount: `−${e.amount} грн`,
+      color: "#dc2626",
+      note: e.note,
+      who: e.who,
+      pending: e.pending,
+    });
+  });
+
+  (APP_DATA.payments || []).forEach((p) => {
+    list.push({
+      cat: "zp",
+      date: p.date,
+      title: `Выплата ЗП: ${empMap[p.empId] || p.empId}`,
+      amount: `−${p.amount} грн`,
+      color: "#dc2626",
+      note: "",
+      who: "Касса",
+      pending: p.pending,
+    });
+  });
+
+  const filtered = list.reverse().filter((item) => {
+    if (filter === "pending") return item.pending;
+    if (filter === "all") return true;
+    return item.cat === filter;
+  });
+
+  ALL_TX_CACHE = filtered;
+  const box = document.getElementById("tx-list-box");
+  if (!filtered.length) {
+    box.innerHTML =
+      "<div style='color:#64748b;font-size:14px;'>Нет проводок по выбранному фильтру</div>";
+    return;
+  }
+
+  const rowsHtml = filtered
+    .map(
+      (t, idx) => `
+    <tr class="tx-row" onclick="openSingleTx(${idx})">
+      <td><b>${formatHumanDate(
+        t.date
+      )}</b><br><span style="font-size:10px;color:#64748b;">${
+        t.pending ? "Ожидает" : "Отправлено"
+      }</span></td>
+      <td>${t.title}${
+        t.note
+          ? `<br><span style="font-size:11px;color:#475569;">${t.note}</span>`
+          : ""
+      }</td>
+      <td style="color:${t.color};font-weight:800;white-space:nowrap;">${
+        t.amount
+      }</td>
+    </tr>
+  `
+    )
+    .join("");
+
+  box.innerHTML = `
+    <div class="table-wrap">
+      <table class="rep-table">
+        <thead><tr><th>Дата</th><th>Операция</th><th>Сумма</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function openSingleTx(idx) {
+  const t = ALL_TX_CACHE.at(idx);
+  if (!t) return;
+  document.body.classList.add("printing-single");
+  document.getElementById("tx-single-body").innerHTML = `
+    <div style="text-align:center;border-bottom:1px dashed #cbd5e1;padding-bottom:10px;margin-bottom:12px;">
+      <div style="font-size:12px;color:#64748b;">ФИНАНСОВАЯ ПРОВОДКА</div>
+      <div style="font-size:22px;font-weight:800;margin-top:4px;color:${
+        t.color
+      };">${t.amount}</div>
+    </div>
+    <div style="font-size:14px;line-height:1.7;">
+      <div><b>Дата:</b> ${t.date}</div>
+      <div><b>Операция:</b> ${t.title}</div>
+      <div><b>Статус:</b> ${
+        t.pending ? "Ожидает отправки" : "Отправлено (закрыто)"
+      }</div>
+      ${t.who ? `<div><b>Внёс:</b> ${t.who}</div>` : ""}
+      ${t.note ? `<div><b>Примечание / Чек:</b> ${t.note}</div>` : ""}
+    </div>
+  `;
+  document.getElementById("tx-single-modal").classList.remove("hidden");
+}
+
+function closeSingleTx() {
+  document.body.classList.remove("printing-single");
+  document.getElementById("tx-single-modal").classList.add("hidden");
 }
 function formatShortPeriod(rawVal, periodKey) {
   const str = String(rawVal || "").trim();
