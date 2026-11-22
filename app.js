@@ -228,12 +228,13 @@ async function submitExpModal() {
   });
   await loadData();
 }
-function matchPeriod(isoDate, period, todayStr, monDate, monthPrefix) {
+function matchPeriod(item, period, todayStr, monDate, monthPrefix) {
+  if (period === "pending") return Boolean(item.pending);
   if (period === "all") return true;
-  if (period === "today") return isoDate === todayStr;
-  if (period === "month") return isoDate.startsWith(monthPrefix);
+  if (period === "today") return item.date === todayStr;
+  if (period === "month") return item.date.startsWith(monthPrefix);
   if (period === "week") {
-    const p = isoDate.split("-");
+    const p = item.date.split("-");
     const d = new Date(Number(p.at(0)), Number(p.at(1)) - 1, Number(p.at(2)));
     return d >= monDate;
   }
@@ -257,7 +258,7 @@ function renderCashStats() {
   let totalBoxes = 0;
 
   (APP_DATA.cash || []).forEach((c) => {
-    if (!matchPeriod(c.date, period, todayStr, mon, monthPrefix)) return;
+    if (!matchPeriod(c, period, todayStr, mon, monthPrefix)) return;
     if (boxSums[c.box] !== undefined) boxSums[c.box] += c.sum;
     else boxSums[c.box] = (boxSums[c.box] || 0) + c.sum;
     totalBoxes += c.sum;
@@ -270,7 +271,7 @@ function renderCashStats() {
   const expDetails = [];
 
   (APP_DATA.cashExp || []).forEach((e) => {
-    if (!matchPeriod(e.date, period, todayStr, mon, monthPrefix)) return;
+    if (!matchPeriod(e, period, todayStr, mon, monthPrefix)) return;
     if (e.type.includes("Терминал")) termSum += e.amount;
     else matSum += e.amount;
     expDetails.push({
@@ -282,7 +283,7 @@ function renderCashStats() {
   });
 
   (APP_DATA.payments || []).forEach((p) => {
-    if (!matchPeriod(p.date, period, todayStr, mon, monthPrefix)) return;
+    if (!matchPeriod(p, period, todayStr, mon, monthPrefix)) return;
     zpSum += p.amount;
   });
 
@@ -316,6 +317,19 @@ function renderCashStats() {
       <span class="debt-val ok" style="font-size:18px;">${netToSend} грн</span>
     </div>
   `;
+
+  if (
+    period === "pending" &&
+    APP_DATA.perms.add_cash &&
+    (totalBoxes > 0 || totalComp > 0)
+  ) {
+    boxHtml += `
+      <button class="btn-primary no-print" style="margin-top:12px;background:#2563eb;" onclick="closeCashBatch(${netToSend}, ${totalComp})">
+        ✅ Отправлено (скомпенсировать ${totalComp} грн)
+      </button>
+    `;
+  }
+
   document.getElementById("cash-boxes-summary").innerHTML = boxHtml;
 
   // Отрисовка движения по разменной кассе 4500 грн
@@ -359,6 +373,24 @@ function renderCashStats() {
   document.getElementById("cash-flow-summary").innerHTML = flowHtml;
 }
 
+async function closeCashBatch(netAmount, compAmount) {
+  if (
+    !confirm(
+      `Подтвердить, что в кассу возвращено ${compAmount} грн (до базы 4500 грн), а чистые ${netAmount} грн отправлены?`
+    )
+  )
+    return;
+  document.getElementById("loader").style.display = "block";
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      key: secretKey,
+      action: "close_cash_batch",
+      netAmount,
+    }),
+  });
+  await loadData();
+}
 function formatShortPeriod(rawVal, periodKey) {
   const str = String(rawVal || "").trim();
   if (periodKey === "period") {
@@ -410,6 +442,7 @@ function buildReportTable(items, periodKey, empMap) {
     </div>
   `;
 }
+
 function renderApp(data) {
   const {
     user,
