@@ -988,23 +988,49 @@ async function saveShift(row) {
 }
 
 async function addPayment() {
-  const empId = document.getElementById("pay-emp").value;
+  const empSelect = document.getElementById("pay-emp");
+  const empId = empSelect.value;
+  const empName = empSelect.options[empSelect.selectedIndex]?.text || empId;
   const date = document.getElementById("pay-date").value;
   const amount = Number(document.getElementById("pay-amount").value);
+
   if (!amount || amount <= 0) return alert("Введите сумму выплаты");
+
+  // Проверка на дубль (тот же сотрудник, та же дата, та же сумма)
+  const hasDuplicate = (APP_DATA?.payments || []).some(
+    (p) => p.empId === empId && p.date === date && Number(p.amount) === amount
+  );
+
+  if (hasDuplicate) {
+    const ok = confirm(
+      `Внимание! Сотруднику ${empName} за ${formatHumanDate(
+        date
+      )} уже записана выплата ${amount} грн.\n\nВы уверены, что нужно выдать ещё одну точно такую же сумму?`
+    );
+    if (!ok) return;
+  }
+
+  const btn = document.querySelector("#payment-card .btn-primary");
+  if (btn) btn.disabled = true;
   document.getElementById("loader").style.display = "block";
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      key: secretKey,
-      action: "add_payment",
-      empId,
-      date,
-      amount,
-    }),
-  });
-  document.getElementById("pay-amount").value = "";
-  await loadData();
+
+  try {
+    await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        key: secretKey,
+        action: "add_payment",
+        empId,
+        date,
+        amount,
+      }),
+    });
+    document.getElementById("pay-amount").value = "";
+    await loadData();
+  } finally {
+    if (btn) btn.disabled = false;
+    document.getElementById("loader").style.display = "none";
+  }
 }
 
 loadData();
