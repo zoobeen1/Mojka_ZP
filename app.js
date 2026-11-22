@@ -63,7 +63,7 @@ function formatHumanDate(isoDate) {
 
 let secretKey = localStorage.getItem("app_pass");
 if (!secretKey) {
-  secretKey = prompt("Введите ваш пароль доступа:");
+  secretKey = prompt("Введите ваш ключ доступа:");
   if (secretKey) localStorage.setItem("app_pass", secretKey);
 }
 
@@ -137,7 +137,7 @@ function openCashModal() {
     });
     headHtml += `<td class="row-sum" id="rsum-${rIdx}">0</td></tr>`;
   });
-  headHtml += `<tr class="tot-money"><td class="box-col" style="background:#dcfce7;">Всього грн</td>${DENOMS.map(
+  headHtml += `<tr class="tot-money"><td class="box-col" style="background:#dcfce7;">Всего грн</td>${DENOMS.map(
     (d) => `<td id="cmoney-${d}">0</td>`
   ).join("")}<td id="ctotal-money">0</td></tr>`;
   headHtml += `<tr class="tot-bills"><td class="box-col" style="background:#fef9c3;">Сум купюр</td>${DENOMS.map(
@@ -489,7 +489,7 @@ function renderDateReport() {
       <span style="font-weight:800;font-size:16px;">${totalBoxes} грн</span>
     </div>
     <div class="emp-bal" style="padding:6px 0;color:#dc2626;">
-      <span style="font-size:14px;">Компенсация в кассу (Терм: ${termSum}, Мат: ${matSum}, ЗП: ${zpSum})</span>
+      <span style="font-size:14px;">Компенсация в кассу (Терм: ${termSum}, Расх: ${matSum}, З/П: ${zpSum})</span>
       <span style="font-weight:700;font-size:15px;">−${totalComp} грн</span>
     </div>
     <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:10px;">
