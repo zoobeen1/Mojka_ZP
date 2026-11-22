@@ -44,7 +44,7 @@
             id="seg-cash"
             onclick="switchFinMode('cash')"
           >
-            💵 Касса
+            💵 Касса и боксы
           </button>
           <button
             class="seg-btn"
@@ -55,12 +55,25 @@
           </button>
         </div>
 
-        <!-- БЛОК КАССЫ -->
+        <!-- БЛОК КАССЫ И БОКСОВ -->
         <div id="mode-cash">
           <div class="panel no-print hidden" id="cash-add-box">
-            <button class="btn-primary" onclick="openCashModal()">
-              ➕ Внести инкассацию (таблица)
-            </button>
+            <div class="rep-grid" style="margin-top: 0">
+              <button
+                class="btn-primary"
+                style="font-size: 14px; padding: 12px"
+                onclick="openCashModal()"
+              >
+                ➕ Сбор с боксов
+              </button>
+              <button
+                class="btn-outline"
+                style="font-size: 14px; padding: 12px"
+                onclick="openExpModal()"
+              >
+                🧾 Расход кассы
+              </button>
+            </div>
           </div>
 
           <div class="panel">
@@ -72,40 +85,33 @@
                 margin-bottom: 10px;
               "
             >
-              <h3 style="margin: 0">Сводка кассы</h3>
-              <select
-                id="cash-period"
-                class="mini-select no-print"
-                onchange="renderCashStats()"
-              >
-                <option value="today">За сегодня</option>
-                <option value="week">За неделю</option>
-                <option value="month" selected>За месяц</option>
-                <option value="all">За всё время</option>
-              </select>
+              <h3 style="margin: 0">Сводка и расчет</h3>
+              <div style="display: flex; gap: 6px; align-items: center">
+                <select
+                  id="cash-period"
+                  class="mini-select no-print"
+                  onchange="renderCashStats()"
+                >
+                  <option value="today" selected>За сегодня</option>
+                  <option value="week">За неделю</option>
+                  <option value="month">За месяц</option>
+                  <option value="all">За всё время</option>
+                </select>
+                <button
+                  class="btn-print no-print"
+                  style="padding: 6px 10px; font-size: 13px"
+                  onclick="window.print()"
+                >
+                  🖨️
+                </button>
+              </div>
             </div>
             <div id="cash-boxes-summary"></div>
           </div>
 
           <div class="panel">
-            <div
-              style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 10px;
-              "
-            >
-              <h3 style="margin: 0">Контроль купюр</h3>
-              <button
-                class="btn-print no-print"
-                style="padding: 6px 12px; font-size: 13px"
-                onclick="window.print()"
-              >
-                🖨️ Печать
-              </button>
-            </div>
-            <div id="cash-denoms-summary"></div>
+            <h3>Движение по кассе (база 4500 грн)</h3>
+            <div id="cash-flow-summary"></div>
           </div>
         </div>
 
@@ -117,7 +123,7 @@
               <div id="balance-list"></div>
             </div>
             <div class="panel hidden" id="payment-card">
-              <h3>Выплата из кассы</h3>
+              <h3>Выплата ЗП из кассы</h3>
               <select id="pay-emp" class="field"></select>
               <input type="date" id="pay-date" class="field" />
               <input
@@ -197,13 +203,13 @@
       </div>
     </div>
 
-    <!-- ОТДЕЛЬНОЕ ОКНО ВВОДА ИНКАССАЦИИ (ТАБЛИЦА) -->
+    <!-- ОКНО 1: ВВОД СБОРА С БОКСОВ (ТАБЛИЦА) -->
     <div id="cash-modal" class="modal-overlay hidden">
       <div class="modal-window">
         <div class="modal-head">
           <div>
             <div style="font-weight: 800; font-size: 17px">
-              Сбор кассы по боксам
+              Сбор выручки с боксов
             </div>
             <input
               type="date"
@@ -227,7 +233,51 @@
         </div>
         <div class="modal-foot">
           <button class="btn-primary" onclick="submitCashModal()">
-            Сохранить инкассацию
+            Сохранить сбор
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ОКНО 2: ВВОД РАСХОДА ИЗ КАССЫ -->
+    <div id="exp-modal" class="modal-overlay hidden">
+      <div class="modal-window" style="max-width: 420px">
+        <div class="modal-head">
+          <div style="font-weight: 800; font-size: 17px">
+            Расход из кассы (4500 грн)
+          </div>
+          <button
+            class="logout-btn"
+            style="font-size: 22px; padding: 4px 8px"
+            onclick="closeExpModal()"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="modal-body" style="padding: 14px">
+          <input type="date" id="exp-date" class="field" />
+          <select id="exp-type" class="field">
+            <option value="Терминал (чек)">
+              Выдача наличных по терминалу (чек)
+            </option>
+            <option value="Материалы">Закупка материалов (чек / отчет)</option>
+          </select>
+          <input
+            type="number"
+            id="exp-amount"
+            class="field"
+            placeholder="Сумма расхода, грн"
+          />
+          <input
+            type="text"
+            id="exp-note"
+            class="field"
+            placeholder="Номер чека или что купили"
+          />
+        </div>
+        <div class="modal-foot">
+          <button class="btn-primary" onclick="submitExpModal()">
+            Записать расход
           </button>
         </div>
       </div>

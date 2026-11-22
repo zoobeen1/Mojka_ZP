@@ -58,6 +58,7 @@ if (!secretKey) {
 
 document.getElementById("pay-date").value = getLocalToday();
 document.getElementById("cash-date").value = getLocalToday();
+document.getElementById("exp-date").value = getLocalToday();
 
 function logout() {
   localStorage.removeItem("app_pass");
@@ -111,7 +112,7 @@ async function loadData() {
   document.getElementById("loader").style.display = "none";
 }
 
-/* КАЛЬКУЛЯТОР ИНКАССАЦИИ В МОДАЛЬНОМ ОКНЕ */
+/* ОКНО 1: КАЛЬКУЛЯТОР СБОРА С БОКСОВ */
 function openCashModal() {
   document.getElementById("cash-date").value = getLocalToday();
   const tbl = document.getElementById("cash-calc-table");
@@ -192,82 +193,170 @@ async function submitCashModal() {
   });
   await loadData();
 }
-/* СВОДКА КАССЫ ПО БОКСАМ И КОНТРОЛЬ КУПЮР */
+
+/* ОКНО 2: РАСХОДЫ ИЗ КАССЫ (ТЕРМИНАЛ / МАТЕРИАЛЫ) */
+function openExpModal() {
+  document.getElementById("exp-date").value = getLocalToday();
+  document.getElementById("exp-amount").value = "";
+  document.getElementById("exp-note").value = "";
+  document.getElementById("exp-modal").classList.remove("hidden");
+}
+
+function closeExpModal() {
+  document.getElementById("exp-modal").classList.add("hidden");
+}
+
+async function submitExpModal() {
+  const date = document.getElementById("exp-date").value;
+  const type = document.getElementById("exp-type").value;
+  const amount = Number(document.getElementById("exp-amount").value);
+  const note = document.getElementById("exp-note").value.trim();
+
+  if (!amount || amount <= 0) return alert("Введите сумму расхода");
+  document.getElementById("loader").style.display = "block";
+  closeExpModal();
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      key: secretKey,
+      action: "add_cash_exp",
+      date,
+      type,
+      amount,
+      note,
+    }),
+  });
+  await loadData();
+}
+function matchPeriod(isoDate, period, todayStr, monDate, monthPrefix) {
+  if (period === "all") return true;
+  if (period === "today") return isoDate === todayStr;
+  if (period === "month") return isoDate.startsWith(monthPrefix);
+  if (period === "week") {
+    const p = isoDate.split("-");
+    const d = new Date(Number(p.at(0)), Number(p.at(1)) - 1, Number(p.at(2)));
+    return d >= monDate;
+  }
+  return true;
+}
+
 function renderCashStats() {
-  if (!APP_DATA || !APP_DATA.cash) return;
+  if (!APP_DATA) return;
   const period = document.getElementById("cash-period").value;
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const todayStr = getLocalToday();
-
   const dow = now.getDay() === 0 ? 7 : now.getDay();
   const mon = new Date(now);
   mon.setDate(now.getDate() - (dow - 1));
   const monthPrefix = todayStr.slice(0, 7);
 
-  const filtered = APP_DATA.cash.filter((item) => {
-    if (period === "all") return true;
-    if (period === "today") return item.date === todayStr;
-    if (period === "month") return item.date.startsWith(monthPrefix);
-    if (period === "week") {
-      const p = item.date.split("-");
-      const d = new Date(Number(p.at(0)), Number(p.at(1)) - 1, Number(p.at(2)));
-      return d >= mon;
-    }
-    return true;
-  });
-
+  // 1. Выручка с боксов
   const boxSums = {};
   CASH_BOXES.forEach((b) => (boxSums[b] = 0));
-  const denomCounts = {};
-  DENOMS.forEach((d) => (denomCounts[d] = 0));
-  let totalAll = 0;
+  let totalBoxes = 0;
 
-  filtered.forEach((c) => {
+  (APP_DATA.cash || []).forEach((c) => {
+    if (!matchPeriod(c.date, period, todayStr, mon, monthPrefix)) return;
     if (boxSums[c.box] !== undefined) boxSums[c.box] += c.sum;
     else boxSums[c.box] = (boxSums[c.box] || 0) + c.sum;
-    totalAll += c.sum;
-    DENOMS.forEach((d) => (denomCounts[d] += c[`b${d}`] || 0));
+    totalBoxes += c.sum;
   });
 
-  const boxDiv = document.getElementById("cash-boxes-summary");
+  // 2. Расходы из кассы (Терминал + Материалы + Выплаты ЗП)
+  let termSum = 0,
+    matSum = 0,
+    zpSum = 0;
+  const expDetails = [];
+
+  (APP_DATA.cashExp || []).forEach((e) => {
+    if (!matchPeriod(e.date, period, todayStr, mon, monthPrefix)) return;
+    if (e.type.includes("Терминал")) termSum += e.amount;
+    else matSum += e.amount;
+    expDetails.push({
+      date: e.date,
+      type: e.type,
+      amount: e.amount,
+      note: e.note,
+    });
+  });
+
+  (APP_DATA.payments || []).forEach((p) => {
+    if (!matchPeriod(p.date, period, todayStr, mon, monthPrefix)) return;
+    zpSum += p.amount;
+  });
+
+  const totalComp = termSum + matSum + zpSum;
+  const netToSend = totalBoxes - totalComp;
+  const currentCashInBox = CASH_BASE - totalComp;
+
+  // Отрисовка сводки выручки и расчета к отправке
   let boxHtml = Object.keys(boxSums)
     .map(
       (b) => `
-    <div class="emp-bal" style="padding:7px 0;">
+    <div class="emp-bal" style="padding:6px 0;">
       <span class="emp-name" style="font-size:14px;">${b}</span>
-      <span style="font-weight:700;font-size:15px;">${boxSums[b]} грн</span>
+      <span style="font-weight:700;font-size:14px;">${boxSums[b]} грн</span>
     </div>
   `
     )
     .join("");
+
   boxHtml += `
-    <div class="emp-bal" style="border-top:2px solid #cbd5e1;margin-top:4px;padding-top:10px;">
-      <span style="font-weight:800;font-size:16px;">ИТОГО КАССА</span>
-      <span class="debt-val ok" style="font-size:18px;">${totalAll} грн</span>
+    <div class="emp-bal" style="border-top:1px solid #cbd5e1;margin-top:4px;padding-top:8px;">
+      <span style="font-weight:700;font-size:15px;">Всего с боксов</span>
+      <span style="font-weight:800;font-size:16px;">${totalBoxes} грн</span>
+    </div>
+    <div class="emp-bal" style="padding:6px 0;color:#dc2626;">
+      <span style="font-size:14px;">Компенсация в кассу</span>
+      <span style="font-weight:700;font-size:15px;">−${totalComp} грн</span>
+    </div>
+    <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:10px;">
+      <span style="font-weight:800;font-size:16px;">К ОТПРАВКЕ</span>
+      <span class="debt-val ok" style="font-size:18px;">${netToSend} грн</span>
     </div>
   `;
-  boxDiv.innerHTML = boxHtml;
+  document.getElementById("cash-boxes-summary").innerHTML = boxHtml;
 
-  const denDiv = document.getElementById("cash-denoms-summary");
-  let totBills = 0;
-  let denRows = DENOMS.map((d) => {
-    const cnt = denomCounts[d];
-    totBills += cnt;
-    return `<tr><td><b>${d} грн</b></td><td>${cnt} шт.</td><td><b>${
-      cnt * d
-    } грн</b></td></tr>`;
-  }).join("");
-  denRows += `<tr style="background:#f8fafc;"><td><b>ВСЕГО</b></td><td><b>${totBills} шт.</b></td><td><b>${totalAll} грн</b></td></tr>`;
-
-  denDiv.innerHTML = `
-    <div class="table-wrap">
-      <table class="rep-table">
-        <thead><tr><th>Номинал</th><th>Кол-во</th><th>Сумма</th></tr></thead>
-        <tbody>${denRows}</tbody>
-      </table>
+  // Отрисовка движения по разменной кассе 4500 грн
+  let flowHtml = `
+    <div class="emp-bal" style="padding:6px 0;">
+      <span style="font-size:14px;color:#64748b;">Норматив кассы (база)</span>
+      <span style="font-weight:700;">${CASH_BASE} грн</span>
+    </div>
+    <div class="emp-bal" style="padding:6px 0;">
+      <span style="font-size:14px;">Выдача по терминалу (чеки)</span>
+      <span style="font-weight:700;color:#dc2626;">−${termSum} грн</span>
+    </div>
+    <div class="emp-bal" style="padding:6px 0;">
+      <span style="font-size:14px;">Закупка материалов</span>
+      <span style="font-weight:700;color:#dc2626;">−${matSum} грн</span>
+    </div>
+    <div class="emp-bal" style="padding:6px 0;">
+      <span style="font-size:14px;">Выплата ЗП сотрудникам</span>
+      <span style="font-weight:700;color:#dc2626;">−${zpSum} грн</span>
+    </div>
+    <div class="emp-bal" style="border-top:1px solid #cbd5e1;padding-top:8px;">
+      <span style="font-weight:700;font-size:14px;">Наличных в кассе до компенсации</span>
+      <span style="font-weight:800;font-size:15px;color:#2563eb;">${currentCashInBox} грн</span>
     </div>
   `;
+
+  if (expDetails.length) {
+    flowHtml += `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:12px;color:#475569;"><b>Чеки и примечания:</b>`;
+    expDetails
+      .slice()
+      .reverse()
+      .forEach((item) => {
+        flowHtml += `<div style="margin-top:4px;">• ${formatHumanDate(
+          item.date
+        )} — ${item.type}: <b>${item.amount} грн</b> ${
+          item.note ? `(${item.note})` : ""
+        }</div>`;
+      });
+    flowHtml += `</div>`;
+  }
+  document.getElementById("cash-flow-summary").innerHTML = flowHtml;
 }
 
 function formatShortPeriod(rawVal, periodKey) {
@@ -420,7 +509,6 @@ function renderApp(data) {
     calDiv.appendChild(card);
   });
 
-  // Управление видимостью разделов Финансов и Кассы
   const showCash = Boolean(perms.view_cash);
   const showSal = Boolean(perms.view_fin);
 

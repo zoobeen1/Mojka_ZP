@@ -32,7 +32,9 @@ const CASH_BOXES = [
   "Бокс 5",
   "Пилосос",
 ];
+
 const DENOMS = Array.of(10, 20, 50, 100, 200, 500, 1000);
+const CASH_BASE = 4500;
 
 const PERM_LABELS = {
   edit_plan: "Менять план смен",
@@ -40,5 +42,5 @@ const PERM_LABELS = {
   view_fin: "Видеть ЗП и долги",
   add_pay: "Вносить выплаты ЗП",
   view_cash: "Видеть кассу и боксы",
-  add_cash: "Вносить инкассацию",
+  add_cash: "Вносить сбор и расходы",
 };
