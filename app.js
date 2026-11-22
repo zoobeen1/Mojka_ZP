@@ -13,7 +13,7 @@ function switchTab(tabId, title, btn) {
   document.getElementById("page-title").textContent = title;
   if (tabId === "finance") {
     showFinSub("main");
-    toggleTxView(false);
+    toggleCashSub("main");
   }
 }
 
@@ -30,13 +30,21 @@ function switchFinMode(mode) {
   document
     .getElementById("seg-salary")
     .classList.toggle("active", mode === "salary");
-  if (mode === "cash") toggleTxView(false);
+  if (mode === "cash") toggleCashSub("main");
 }
 
-function toggleTxView(showTx) {
-  document.getElementById("cash-main-view").classList.toggle("hidden", showTx);
-  document.getElementById("cash-tx-view").classList.toggle("hidden", !showTx);
-  if (showTx) initDateReport();
+function toggleCashSub(sub) {
+  document
+    .getElementById("cash-main-view")
+    .classList.toggle("hidden", sub !== "main");
+  document
+    .getElementById("cash-matrix-view")
+    .classList.toggle("hidden", sub !== "matrix");
+  document
+    .getElementById("cash-tx-view")
+    .classList.toggle("hidden", sub !== "date");
+  if (sub === "matrix") renderMatrixTable();
+  if (sub === "date") initDateReport();
 }
 
 function showFinSub(sub) {
@@ -407,8 +415,190 @@ async function closeCashBatch(netAmount, compAmount) {
   });
   await loadData();
 }
+/* КОМПАКТНАЯ ТАБЛИЦА ПО БОКСАМ С РАЗБИВКОЙ ПО МЕСЯЦАМ И ГОДАМ */
+function renderMatrixTable() {
+  if (!APP_DATA) return;
+  const MONTHS_FULL = Array.of(
+    "Январь",
+    "Февраль",
+    "Март",
+    "Апрель",
+    "Май",
+    "Июнь",
+    "Июль",
+    "Август",
+    "Сентябрь",
+    "Октябрь",
+    "Ноябрь",
+    "Декабрь"
+  );
+  const byDate = {};
 
-/* ЖУРНАЛ ВСЕХ ПРОВОДОК И ПЕЧАТЬ ОДНОЙ ПРОВОДКИ */
+  const ensureDate = (d) => {
+    if (!byDate[d])
+      byDate[d] = { b1: 0, b2: 0, b3: 0, b4: 0, b5: 0, pil: 0, term: 0 };
+  };
+
+  (APP_DATA.cash || []).forEach((c) => {
+    if (c.pending) return;
+    ensureDate(c.date);
+    if (c.box === "Бокс 1") byDate[c.date].b1 += c.sum;
+    else if (c.box === "Бокс 2") byDate[c.date].b2 += c.sum;
+    else if (c.box === "Бокс 3") byDate[c.date].b3 += c.sum;
+    else if (c.box === "Бокс 4") byDate[c.date].b4 += c.sum;
+    else if (c.box === "Бокс 5") byDate[c.date].b5 += c.sum;
+    else if (c.box === "Пилосос") byDate[c.date].pil += c.sum;
+  });
+
+  (APP_DATA.cashExp || []).forEach((e) => {
+    if (e.pending) return;
+    if (e.type.includes("Терминал")) {
+      ensureDate(e.date);
+      byDate[e.date].term += e.amount;
+    }
+  });
+
+  const dates = Object.keys(byDate).sort().reverse();
+  const box = document.getElementById("matrix-table-box");
+  if (!dates.length) {
+    box.innerHTML =
+      "<div style='color:#64748b;font-size:14px;'>Пока нет проведённых сборов</div>";
+    return;
+  }
+
+  const byMonth = {};
+  dates.forEach((d) => {
+    const ym = d.slice(0, 7);
+    if (!byMonth[ym]) byMonth[ym] = [];
+    byMonth[ym].push(d);
+  });
+
+  const grandTot = {
+    b1: 0,
+    b2: 0,
+    b3: 0,
+    b4: 0,
+    b5: 0,
+    pil: 0,
+    term: 0,
+    all: 0,
+  };
+  let bodyHtml = "";
+
+  Object.keys(byMonth)
+    .sort()
+    .reverse()
+    .forEach((ym) => {
+      const p = ym.split("-");
+      const mTitle = `${MONTHS_FULL.at(Number(p.at(1)) - 1) || p.at(1)} ${p.at(
+        0
+      )}`;
+      const mTot = {
+        b1: 0,
+        b2: 0,
+        b3: 0,
+        b4: 0,
+        b5: 0,
+        pil: 0,
+        term: 0,
+        all: 0,
+      };
+
+      bodyHtml += `
+      <tr style="background:#eff6ff;color:#1e3a8a;font-weight:800;">
+        <td colspan="9" style="text-align:left;padding:8px 6px;font-size:13px;">📅 ${mTitle}</td>
+      </tr>
+    `;
+
+      byMonth[ym].forEach((d) => {
+        const r = byDate[d];
+        const rowSum = r.b1 + r.b2 + r.b3 + r.b4 + r.b5 + r.pil + r.term;
+        mTot.b1 += r.b1;
+        mTot.b2 += r.b2;
+        mTot.b3 += r.b3;
+        mTot.b4 += r.b4;
+        mTot.b5 += r.b5;
+        mTot.pil += r.pil;
+        mTot.term += r.term;
+        mTot.all += rowSum;
+
+        const dp = d.split("-");
+        const shortD = `${Number(dp.at(2))}.${dp.at(1)}`;
+        bodyHtml += `
+        <tr>
+          <td style="text-align:left;"><b>${shortD}</b></td>
+          <td>${r.b1 || "-"}</td>
+          <td>${r.b2 || "-"}</td>
+          <td>${r.b3 || "-"}</td>
+          <td>${r.b4 || "-"}</td>
+          <td>${r.b5 || "-"}</td>
+          <td>${r.pil || "-"}</td>
+          <td>${r.term || "-"}</td>
+          <td><b>${rowSum}</b></td>
+        </tr>
+      `;
+      });
+
+      bodyHtml += `
+      <tr style="background:#f1f5f9;font-weight:800;color:#0f172a;">
+        <td style="text-align:left;">Итого</td>
+        <td>${mTot.b1}</td>
+        <td>${mTot.b2}</td>
+        <td>${mTot.b3}</td>
+        <td>${mTot.b4}</td>
+        <td>${mTot.b5}</td>
+        <td>${mTot.pil}</td>
+        <td>${mTot.term}</td>
+        <td>${mTot.all}</td>
+      </tr>
+    `;
+
+      grandTot.b1 += mTot.b1;
+      grandTot.b2 += mTot.b2;
+      grandTot.b3 += mTot.b3;
+      grandTot.b4 += mTot.b4;
+      grandTot.b5 += mTot.b5;
+      grandTot.pil += mTot.pil;
+      grandTot.term += mTot.term;
+      grandTot.all += mTot.all;
+    });
+
+  bodyHtml += `
+    <tr style="background:#dcfce7;font-weight:800;color:#14532d;border-top:2px solid #94a3b8;">
+      <td style="text-align:left;">ВСЕГО</td>
+      <td>${grandTot.b1}</td>
+      <td>${grandTot.b2}</td>
+      <td>${grandTot.b3}</td>
+      <td>${grandTot.b4}</td>
+      <td>${grandTot.b5}</td>
+      <td>${grandTot.pil}</td>
+      <td>${grandTot.term}</td>
+      <td>${grandTot.all}</td>
+    </tr>
+  `;
+
+  box.innerHTML = `
+    <div class="table-wrap">
+      <table class="rep-table" style="font-size:12px;text-align:center;">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Дата</th>
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            <th>4</th>
+            <th>5</th>
+            <th>Пыл</th>
+            <th>Терм</th>
+            <th>Сумм</th>
+          </tr>
+        </thead>
+        <tbody>${bodyHtml}</tbody>
+      </table>
+    </div>
+  `;
+}
+
 /* СВОДНЫЙ ОТЧЕТ ПО ВЫБРАННОЙ ДАТЕ */
 function initDateReport() {
   if (!APP_DATA) return;
@@ -506,7 +696,6 @@ function renderDateReport() {
 
   document.getElementById("date-report-box").innerHTML = html;
 }
-
 function formatShortPeriod(rawVal, periodKey) {
   const str = String(rawVal || "").trim();
   if (periodKey === "period") {
