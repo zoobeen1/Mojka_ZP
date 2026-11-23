@@ -1,6 +1,14 @@
-// Отрисовка списка поломок и заметок по мойке с учётом выбранного фильтра
+// Отрисовка списка поломок и заметок с учётом раздельных прав на добавление и закрытие
 function renderNotes() {
   if (!APP_DATA) return;
+  const canAdd = Boolean(APP_DATA.perms.add_notes);
+  const canClose = Boolean(APP_DATA.perms.close_notes);
+
+  const panels = document.querySelectorAll("#tab-notes .panel");
+  if (panels.length >= 2) {
+    panels.at(0).classList.toggle("hidden", !canAdd);
+  }
+
   const filter = document.getElementById("notes-filter").value;
   const list = (APP_DATA.notes || [])
     .slice()
@@ -21,9 +29,11 @@ function renderNotes() {
   box.innerHTML = list
     .map(
       (n) => `
-    <div class="log-row" style="cursor:pointer;padding:10px 6px;border-radius:10px;${
-      n.done ? "opacity:0.6;background:#f8fafc;" : ""
-    }" onclick="toggleNoteStatus(${n.row}, ${!n.done})">
+    <div class="log-row" style="padding:10px 6px;border-radius:10px;${
+      canClose ? "cursor:pointer;" : ""
+    }${n.done ? "opacity:0.6;background:#f8fafc;" : ""}" ${
+        canClose ? `onclick="toggleNoteStatus(${n.row}, ${!n.done})"` : ""
+      }>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
         <span class="log-meta">${formatHumanDate(n.date)} · <b>${
         n.target
@@ -47,7 +57,7 @@ function renderNotes() {
     .join("");
 }
 
-// Добавление новой заметки или поломки в Google Таблицу с блокировкой кнопки от повторного нажатия
+// Добавление новой заметки или поломки в Google Таблицу
 async function addNote() {
   const date = document.getElementById("note-date").value;
   const target = document.getElementById("note-target").value;
@@ -69,8 +79,9 @@ async function addNote() {
   }
 }
 
-// Переключение статуса заметки (Активно <-> Решено) по клику на карточку
+// Переключение статуса заметки (Активно <-> Решено) для ролей с правом close_notes
 async function toggleNoteStatus(row, newDone) {
+  if (!APP_DATA?.perms?.close_notes) return;
   const label = newDone
     ? "Отметить эту проблему как РЕШЁННУЮ?"
     : "Вернуть эту заметку в АКТИВНЫЕ?";
