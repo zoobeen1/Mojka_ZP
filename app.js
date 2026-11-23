@@ -698,8 +698,8 @@ function renderDateReport() {
       <span style="font-weight:800;font-size:16px;">${totalBoxes} грн</span>
     </div>
     <div class="emp-bal" style="padding:6px 0;color:#dc2626;">
-      <span style="font-size:14px;">Компенсация в кассу (Терм: ${termSum}, Расх: ${matSum}, З/П: ${zpSum})</span>
-      <span style="font-weight:700;font-size:15px;">−${totalComp} грн</span>
+      <span style="font-size:16px;">Компенсация в кассу</span>
+      <span style="font-weight:700;font-size:16px;">−${totalComp} грн</span>
     </div>
     <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:10px;">
       <span style="font-weight:800;font-size:16px;">ОТПРАВЛЕНО ЧИСТЫМИ</span>
