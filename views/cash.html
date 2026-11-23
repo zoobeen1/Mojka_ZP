@@ -1,0 +1,116 @@
+<div id="mode-cash">
+  <div id="cash-main-view">
+    <div class="panel no-print hidden" id="cash-add-box">
+      <div class="rep-grid" style="margin-top: 0">
+        <button
+          class="btn-primary"
+          style="font-size: 14px; padding: 12px"
+          onclick="openCashModal()"
+        >
+          ➕ Сбор с боксов
+        </button>
+        <button
+          class="btn-outline"
+          style="font-size: 14px; padding: 12px"
+          onclick="openExpModal()"
+        >
+          🧾 Расход кассы
+        </button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        "
+      >
+        <h3 style="margin: 0">Сводка и расчет</h3>
+        <div style="display: flex; gap: 6px; align-items: center">
+          <select
+            id="cash-period"
+            class="mini-select no-print"
+            onchange="renderCashStats()"
+          >
+            <option value="pending" selected>К отправке (Ожидает)</option>
+            <option value="today">Архив: Сегодня</option>
+            <option value="week">Архив: Неделя</option>
+            <option value="month">Архив: Месяц</option>
+            <option value="all">Архив: Всё время</option>
+          </select>
+          <button
+            class="btn-print no-print"
+            style="padding: 6px 10px; font-size: 13px"
+            onclick="window.print()"
+          >
+            🖨️
+          </button>
+        </div>
+      </div>
+      <div id="cash-boxes-summary"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Движение по кассе (база 4500 грн)</h3>
+      <div id="cash-flow-summary"></div>
+    </div>
+
+    <div class="panel no-print">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <button
+          class="btn-outline"
+          style="width: 100%; max-width: 100%"
+          onclick="toggleCashSub('matrix')"
+        >
+          📊 Таблица сборов (1–5, Пыл, Терм)
+        </button>
+        <button
+          class="btn-outline"
+          style="width: 100%; max-width: 100%"
+          onclick="toggleCashSub('date')"
+        >
+          📅 Сводный отчет по конкретной дате
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="cash-matrix-view" class="hidden">
+    <div class="rep-toolbar no-print">
+      <button class="btn-back" onclick="toggleCashSub('main')">← Назад</button>
+      <button class="btn-print" onclick="window.print()">🖨️ Печать</button>
+    </div>
+    <div class="panel print-area">
+      <h3>Сводка сборов по боксам</h3>
+      <div id="matrix-table-box"></div>
+    </div>
+  </div>
+
+  <div id="cash-tx-view" class="hidden">
+    <div class="rep-toolbar no-print">
+      <button class="btn-back" onclick="toggleCashSub('main')">← Назад</button>
+      <button class="btn-print" onclick="window.print()">🖨️ Печать</button>
+    </div>
+    <div class="panel print-area">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+        "
+      >
+        <h3 style="margin: 0">Сводка за дату</h3>
+        <select
+          id="tx-date-select"
+          class="mini-select"
+          onchange="renderDateReport()"
+        ></select>
+      </div>
+      <div id="date-report-box"></div>
+    </div>
+  </div>
+</div>
