@@ -416,6 +416,15 @@ async function closeCashBatch(netAmount, compAmount) {
   await loadData();
 }
 /* КОМПАКТНАЯ ТАБЛИЦА ПО БОКСАМ С РАЗБИВКОЙ ПО МЕСЯЦАМ И ГОДАМ */
+function openDateFromMatrix(isoDate) {
+  toggleCashSub("date");
+  const sel = document.getElementById("tx-date-select");
+  if (sel) {
+    sel.value = isoDate;
+    renderDateReport();
+  }
+}
+
 function renderMatrixTable() {
   if (!APP_DATA) return;
   const MONTHS_FULL = Array.of(
@@ -525,8 +534,8 @@ function renderMatrixTable() {
         const dp = d.split("-");
         const shortD = `${Number(dp.at(2))}.${dp.at(1)}`;
         bodyHtml += `
-        <tr>
-          <td style="text-align:left;"><b>${shortD}</b></td>
+        <tr style="cursor:pointer;" onclick="openDateFromMatrix('${d}')" title="Открыть сводку за ${shortD}">
+          <td style="text-align:left;"><b style="color:#2563eb;text-decoration:underline;">${shortD}</b></td>
           <td>${r.b1 || "-"}</td>
           <td>${r.b2 || "-"}</td>
           <td>${r.b3 || "-"}</td>
@@ -631,6 +640,9 @@ function renderDateReport() {
   const targetDate = document.getElementById("tx-date-select").value;
   if (!targetDate || !APP_DATA) return;
 
+  const empMap = {};
+  (APP_DATA.employees || []).forEach((e) => (empMap[e.id] = e.name));
+
   const boxSums = {};
   CASH_BOXES.forEach((b) => (boxSums[b] = 0));
   let totalBoxes = 0;
@@ -646,17 +658,24 @@ function renderDateReport() {
   let termSum = 0,
     matSum = 0,
     zpSum = 0;
-  const notes = [];
+  const expList = [];
+
   (APP_DATA.cashExp || []).forEach((e) => {
     if (!e.pending && e.date === targetDate) {
       if (e.type.includes("Терминал")) termSum += e.amount;
       else matSum += e.amount;
-      notes.push(`${e.type}: ${e.amount} грн ${e.note ? `(${e.note})` : ""}`);
+      expList.push(
+        `${e.type}: <b>${e.amount} грн</b> ${e.note ? `(${e.note})` : ""}`
+      );
     }
   });
 
   (APP_DATA.payments || []).forEach((p) => {
-    if (!p.pending && p.date === targetDate) zpSum += p.amount;
+    if (!p.pending && p.date === targetDate) {
+      zpSum += p.amount;
+      const eName = empMap[p.empId] || p.empId;
+      expList.push(`Выплата З/П (${eName}): <b>${p.amount} грн</b>`);
+    }
   });
 
   const totalComp = termSum + matSum + zpSum;
@@ -688,14 +707,15 @@ function renderDateReport() {
     </div>
   `;
 
-  if (notes.length) {
-    html += `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:12px;color:#475569;"><b>Чеки и примечания за день:</b><br>• ${notes.join(
+  if (expList.length) {
+    html += `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:12px;color:#475569;"><b>Расходы:</b><br>• ${expList.join(
       "<br>• "
     )}</div>`;
   }
 
   document.getElementById("date-report-box").innerHTML = html;
 }
+
 function formatShortPeriod(rawVal, periodKey) {
   const str = String(rawVal || "").trim();
   if (periodKey === "period") {
