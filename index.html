@@ -61,6 +61,7 @@
       </div>
 
       <div id="slot-admin"></div>
+      <div id="slot-notes"></div>
     </div>
 
     <div id="slot-modals"></div>
@@ -79,6 +80,13 @@
       >
         <span class="nav-ico">💳</span><span>Финансы</span>
       </button>
+      <button
+        class="nav-item"
+        onclick="switchTab('notes', 'Заметки по мойке', this)"
+      >
+        <span class="nav-ico">🔧</span><span>Заметки</span>
+      </button>
+
       <button
         class="nav-item hidden"
         id="nav-logs"
@@ -100,6 +108,7 @@
     <script src="js/schedule.js"></script>
     <script src="js/cash.js"></script>
     <script src="js/salary.js"></script>
+    <script src="js/notes.js"></script>
     <script src="js/main.js"></script>
     <script>
       if ("serviceWorker" in navigator) {

@@ -1,0 +1,54 @@
+<div id="tab-notes" class="tab-view hidden">
+  <div class="panel">
+    <h3>Новая заметка / поломка</h3>
+    <div style="display: flex; gap: 8px; margin-bottom: 10px">
+      <input
+        type="date"
+        id="note-date"
+        class="field"
+        style="margin-bottom: 0; flex: 1"
+      />
+      <select id="note-target" class="field" style="margin-bottom: 0; flex: 1">
+        <option value="Общее">Общее (мойка)</option>
+        <option value="Бокс 1">Бокс 1</option>
+        <option value="Бокс 2">Бокс 2</option>
+        <option value="Бокс 3">Бокс 3</option>
+        <option value="Бокс 4">Бокс 4</option>
+        <option value="Бокс 5">Бокс 5</option>
+        <option value="Пилосос">Пилосос</option>
+        <option value="Терминал / Касса">Терминал / Касса</option>
+      </select>
+    </div>
+    <input
+      type="text"
+      id="note-text"
+      class="field"
+      placeholder="Что случилось (сломался терминал, течёт шланг...)"
+    />
+    <button class="btn-primary" id="btn-add-note" onclick="addNote()">
+      Записать в журнал
+    </button>
+  </div>
+
+  <div class="panel">
+    <div
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      "
+    >
+      <h3 style="margin: 0">События по мойке</h3>
+      <select id="notes-filter" class="mini-select" onchange="renderNotes()">
+        <option value="active" selected>Требуют внимания</option>
+        <option value="all">Все записи</option>
+        <option value="done">Решённые</option>
+      </select>
+    </div>
+    <div style="font-size: 12px; color: #64748b; margin-bottom: 8px">
+      Нажмите на запись, чтобы отметить как «Решено» или вернуть в работу
+    </div>
+    <div id="notes-list"></div>
+  </div>
+</div>

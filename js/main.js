@@ -117,6 +117,7 @@ function renderApp(data) {
 
   renderSalary(data);
   renderAdmin(data);
+  renderNotes();
 }
 
 // Инициализация приложения: сначала загружаем HTML-шаблоны из views/, затем ставим даты и грузим данные
@@ -126,6 +127,7 @@ async function initApp() {
   document.getElementById("pay-date").value = today;
   document.getElementById("cash-date").value = today;
   document.getElementById("exp-date").value = today;
+  document.getElementById("note-date").value = today;
   await loadData();
 }
 

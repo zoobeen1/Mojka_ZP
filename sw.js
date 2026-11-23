@@ -1,4 +1,4 @@
-const CACHE_NAME = "smeny-kassa-v3";
+const CACHE_NAME = "smeny-kassa-v4";
 
 // Полный список всех файлов приложения, которые сохраняются в кэш телефона
 const ASSETS = Array.of(
@@ -15,6 +15,8 @@ const ASSETS = Array.of(
   "./js/schedule.js",
   "./js/cash.js",
   "./js/salary.js",
+  "./views/notes.html",
+  "./js/notes.js",
   "./js/main.js"
 );
 
