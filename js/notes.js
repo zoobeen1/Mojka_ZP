@@ -6,7 +6,7 @@ function renderNotes() {
 
   const panels = document.querySelectorAll("#tab-notes .panel");
   if (panels.length >= 2) {
-    panels[0].classList.toggle("hidden", !canAdd);
+    panels.item(0).classList.toggle("hidden", !canAdd);
   }
 
   const filter = document.getElementById("notes-filter").value;
