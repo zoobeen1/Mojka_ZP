@@ -63,7 +63,7 @@ async function loadViews() {
     ["slot-salary", "views/salary.html"],
     ["slot-admin", "views/admin.html"],
     ["slot-notes", "views/notes.html"],
-    [("slot-modals", "views/modals.html")]
+    ["slot-modals", "views/modals.html"]
   );
   await Promise.all(
     parts.map(async ([slotId, url]) => {
