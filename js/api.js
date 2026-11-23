@@ -87,7 +87,7 @@ async function loadData() {
     APP_DATA = data;
     renderApp(data);
   } catch (e) {
-    alert("Ошибка соединения с таблицей");
+    alert("Ошибка: " + e.message);
   }
   document.getElementById("loader").style.display = "none";
 }
