@@ -1,6 +1,6 @@
 <div id="tab-notes" class="tab-view hidden">
   <div class="panel">
-    <h3>Новая заметка / поломка</h3>
+    <h3>Новая заметка</h3>
     <div style="display: flex; gap: 8px; margin-bottom: 10px">
       <input
         type="date"
@@ -19,11 +19,17 @@
         <option value="Терминал / Касса">Терминал / Касса</option>
       </select>
     </div>
+    <select id="note-type" class="field">
+      <option value="issue" selected>
+        ⚠️ Требует внимания (поломка/задача)
+      </option>
+      <option value="info">ℹ️ Простая заметка</option>
+    </select>
     <input
       type="text"
       id="note-text"
       class="field"
-      placeholder="Что случилось (сломался терминал, течёт шланг...)"
+      placeholder="Опишите ситуацию или выполненную работу..."
     />
     <button class="btn-primary" id="btn-add-note" onclick="addNote()">
       Записать в журнал
@@ -43,11 +49,12 @@
       <select id="notes-filter" class="mini-select" onchange="renderNotes()">
         <option value="active" selected>Требуют внимания</option>
         <option value="all">Все записи</option>
+        <option value="info">Инфо - простые заметки</option>
         <option value="done">Решённые</option>
       </select>
     </div>
     <div style="font-size: 12px; color: #64748b; margin-bottom: 8px">
-      Нажмите на запись, чтобы отметить как «Решено» или вернуть в работу
+      Нажмите на активную проблему, чтобы указать, что сделано и кем
     </div>
     <div id="notes-list"></div>
   </div>
