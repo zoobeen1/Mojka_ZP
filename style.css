@@ -767,3 +767,151 @@ body.printing-single .modal-window {
 .logout-btn.btn-pass {
   color: var(--primary);
 }
+/* Чистые классы для js/cash.js */
+.empty-msg {
+  color: var(--muted);
+  font-size: 14px;
+}
+.box-col.bg-money {
+  background: #dcfce7;
+}
+.box-col.bg-bills {
+  background: #fef9c3;
+}
+.emp-bal.bal-sm {
+  padding: 6px 0;
+}
+.emp-bal.bal-sub {
+  border-top: 1px solid #cbd5e1;
+  margin-top: 4px;
+  padding-top: 8px;
+}
+.emp-bal.bal-sub-clean {
+  border-top: 1px solid #cbd5e1;
+  padding-top: 8px;
+}
+.emp-bal.bal-total {
+  border-top: 2px solid #cbd5e1;
+  padding-top: 10px;
+}
+.emp-bal.bal-total-sm {
+  border-top: 2px solid #cbd5e1;
+  padding-top: 8px;
+}
+.emp-name.name-sm {
+  font-size: 14px;
+}
+.txt-sm {
+  font-size: 14px;
+}
+.txt-md {
+  font-size: 15px;
+}
+.txt-lg {
+  font-size: 16px;
+}
+.txt-xl {
+  font-size: 18px;
+}
+.txt-muted {
+  color: var(--muted);
+}
+.txt-slate {
+  color: #475569;
+}
+.txt-red {
+  color: #dc2626;
+}
+.txt-green {
+  color: #15803d;
+}
+.txt-blue {
+  color: var(--primary);
+}
+.fw-700 {
+  font-weight: 700;
+}
+.fw-800 {
+  font-weight: 800;
+}
+.dashed-box {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 12px;
+  color: #475569;
+}
+.dashed-box.no-print {
+  margin-top: 12px;
+  padding-top: 10px;
+}
+.dashed-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.chk-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  cursor: pointer;
+}
+.comp-chk {
+  width: 18px;
+  height: 18px;
+}
+.field.field-sm {
+  margin-bottom: 8px;
+}
+.field.field-fact {
+  margin-bottom: 8px;
+  font-weight: 800;
+  font-size: 16px;
+}
+.disp-row {
+  cursor: pointer;
+  padding: 10px 6px;
+}
+.disp-row-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.disp-note {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #475569;
+}
+.rep-table.matrix-table {
+  font-size: 12px;
+  text-align: center;
+}
+.rep-table.matrix-table th:first-child,
+.rep-table.matrix-table td:first-child {
+  text-align: left;
+}
+.matrix-month td {
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-weight: 800;
+  padding: 8px 6px;
+  font-size: 13px;
+}
+.matrix-day {
+  cursor: pointer;
+}
+.matrix-date-link {
+  color: var(--primary);
+  text-decoration: underline;
+}
+.matrix-subtot td {
+  background: #f1f5f9;
+  font-weight: 800;
+  color: var(--text);
+}
+.matrix-grandtot td {
+  background: #dcfce7;
+  font-weight: 800;
+  color: #14532d;
+  border-top: 2px solid #94a3b8;
+}

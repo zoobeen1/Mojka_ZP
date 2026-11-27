@@ -40,10 +40,10 @@ function openCashModal() {
     });
     headHtml += `<td class="row-sum" id="rsum-${rIdx}">0</td></tr>`;
   });
-  headHtml += `<tr class="tot-money"><td class="box-col" style="background:#dcfce7;">Всего грн</td>${DENOMS.map(
+  headHtml += `<tr class="tot-money"><td class="box-col bg-money">Всего грн</td>${DENOMS.map(
     (d) => `<td id="cmoney-${d}">0</td>`
   ).join("")}<td id="ctotal-money">0</td></tr>`;
-  headHtml += `<tr class="tot-bills"><td class="box-col" style="background:#fef9c3;">Сум купюр</td>${DENOMS.map(
+  headHtml += `<tr class="tot-bills"><td class="box-col bg-bills">Сум купюр</td>${DENOMS.map(
     (d) => `<td id="cbills-${d}">0</td>`
   ).join("")}<td id="ctotal-bills">0</td></tr></tbody>`;
   tbl.innerHTML = headHtml;
@@ -172,7 +172,6 @@ function recalcDispatchPreview() {
   if (factInput) factInput.value = netToSend;
   if (cashRemainEl) cashRemainEl.textContent = `${cashBase - selectedComp} грн`;
 }
-
 // Отрисовка сводки выручки по боксам и списка чеков/выплат с галочками для гибкой компенсации
 function renderCashStats() {
   if (!APP_DATA) return;
@@ -223,28 +222,28 @@ function renderCashStats() {
   let boxHtml = Object.keys(boxSums)
     .map(
       (b) => `
-    <div class="emp-bal" style="padding:6px 0;">
-      <span class="emp-name" style="font-size:14px;">${b}</span>
-      <span style="font-weight:700;font-size:14px;">${boxSums[b]} грн</span>
+    <div class="emp-bal bal-sm">
+      <span class="emp-name name-sm">${b}</span>
+      <span class="fw-700 txt-sm">${boxSums[b]} грн</span>
     </div>
   `
     )
     .join("");
 
   boxHtml += `
-    <div class="emp-bal" style="border-top:1px solid #cbd5e1;margin-top:4px;padding-top:8px;">
-      <span style="font-weight:700;font-size:15px;">Всего с боксов</span>
-      <span style="font-weight:800;font-size:16px;" id="disp-boxes-total" data-val="${totalBoxes}">${totalBoxes} грн</span>
+    <div class="emp-bal bal-sub">
+      <span class="fw-700 txt-md">Всего с боксов</span>
+      <span class="fw-800 txt-lg" id="disp-boxes-total" data-val="${totalBoxes}">${totalBoxes} грн</span>
     </div>
-    <div class="emp-bal" style="padding:6px 0;color:#dc2626;">
-      <span style="font-size:14px;">Компенсация в кассу</span>
-      <span style="font-weight:700;font-size:15px;" id="disp-comp-val">−${totalComp} грн</span>
+    <div class="emp-bal bal-sm txt-red">
+      <span class="txt-sm">Компенсация в кассу</span>
+      <span class="fw-700 txt-md" id="disp-comp-val">−${totalComp} грн</span>
     </div>
-    <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:10px;">
-      <span style="font-weight:800;font-size:16px;">${
+    <div class="emp-bal bal-total">
+      <span class="fw-800 txt-lg">${
         period === "pending" ? "К ОТПРАВКЕ" : "СБОРЫ ЗА ПЕРИОД"
       }</span>
-      <span class="debt-val ok" style="font-size:18px;" id="disp-net-val">${netToSend} грн</span>
+      <span class="debt-val ok txt-xl" id="disp-net-val">${netToSend} грн</span>
     </div>
   `;
 
@@ -254,11 +253,11 @@ function renderCashStats() {
     (totalBoxes > 0 || totalComp > 0)
   ) {
     boxHtml += `
-      <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1;" class="no-print">
-        <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Фактически отправлено, грн (можно исправить при расхождении):</div>
-        <input type="number" id="disp-fact-amount" class="field" style="margin-bottom:8px;font-weight:800;font-size:16px;" value="${netToSend}">
-        <input type="text" id="disp-note" class="field" style="margin-bottom:8px;" placeholder="Примечание к отправке (необязательно)">
-        <button class="btn-primary" style="background:#2563eb;" onclick="closeCashBatch()">
+      <div class="dashed-box no-print">
+        <div class="field-label">Фактически отправлено, грн (можно исправить при расхождении):</div>
+        <input type="number" id="disp-fact-amount" class="field field-fact" value="${netToSend}">
+        <input type="text" id="disp-note" class="field field-sm" placeholder="Примечание к отправке (необязательно)">
+        <button class="btn-primary btn-blue" onclick="closeCashBatch()">
           ✅ Провести отправку
         </button>
       </div>
@@ -271,41 +270,39 @@ function renderCashStats() {
   flowCard.classList.toggle("hidden", period !== "pending");
 
   let flowHtml = `
-    <div class="emp-bal" style="padding:6px 0;">
-      <span style="font-size:14px;color:#64748b;">Норматив кассы (база)</span>
-      <span style="font-weight:700;">${cashBase} грн</span>
+    <div class="emp-bal bal-sm">
+      <span class="txt-sm txt-muted">Норматив кассы (база)</span>
+      <span class="fw-700">${cashBase} грн</span>
     </div>
-    <div class="emp-bal" style="padding:6px 0;">
-      <span style="font-size:14px;">Выдача по терминалу (чеки)</span>
-      <span style="font-weight:700;color:#dc2626;">−${termSum} грн</span>
+    <div class="emp-bal bal-sm">
+      <span class="txt-sm">Выдача по терминалу (чеки)</span>
+      <span class="fw-700 txt-red">−${termSum} грн</span>
     </div>
-    <div class="emp-bal" style="padding:6px 0;">
-      <span style="font-size:14px;">Расходы (материалы и др.)</span>
-      <span style="font-weight:700;color:#dc2626;">−${expSum} грн</span>
+    <div class="emp-bal bal-sm">
+      <span class="txt-sm">Расходы (материалы и др.)</span>
+      <span class="fw-700 txt-red">−${expSum} грн</span>
     </div>
-    <div class="emp-bal" style="padding:6px 0;">
-      <span style="font-size:14px;">Выплата ЗП сотрудникам</span>
-      <span style="font-weight:700;color:#dc2626;">−${zpSum} грн</span>
+    <div class="emp-bal bal-sm">
+      <span class="txt-sm">Выплата ЗП сотрудникам</span>
+      <span class="fw-700 txt-red">−${zpSum} грн</span>
     </div>
-    <div class="emp-bal" style="border-top:1px solid #cbd5e1;padding-top:8px;">
-      <span style="font-weight:700;font-size:14px;">Наличных в кассе до компенсации</span>
-      <span style="font-weight:800;font-size:15px;color:#2563eb;" id="disp-cash-remain">${
+    <div class="emp-bal bal-sub-clean">
+      <span class="fw-700 txt-sm">Наличных в кассе до компенсации</span>
+      <span class="fw-800 txt-md txt-blue" id="disp-cash-remain">${
         cashBase - totalComp
       } грн</span>
     </div>
   `;
 
   if (termItems.length || expItems.length || payItems.length) {
-    flowHtml += `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:12px;color:#475569;">
-      <div style="font-weight:700;margin-bottom:6px;">Отметьте галочкой, что компенсируем в кассу сейчас:</div>`;
+    flowHtml += `<div class="dashed-box">
+      <div class="dashed-title">Отметьте галочкой, что компенсируем в кассу сейчас:</div>`;
 
     termItems.forEach((t) => {
-      flowHtml += `<label style="display:flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;">
+      flowHtml += `<label class="chk-row">
         <input type="checkbox" class="comp-chk" data-kind="term" data-row="${
           t.row
-        }" data-amount="${
-        t.amount
-      }" checked onchange="recalcDispatchPreview()" style="width:18px;height:18px;">
+        }" data-amount="${t.amount}" checked onchange="recalcDispatchPreview()">
         <span>${formatHumanDate(t.date)} · Терминал: <b>${t.amount} грн</b> ${
         t.note ? `(${t.note})` : ""
       }</span>
@@ -313,12 +310,10 @@ function renderCashStats() {
     });
 
     expItems.forEach((e) => {
-      flowHtml += `<label style="display:flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;">
+      flowHtml += `<label class="chk-row">
         <input type="checkbox" class="comp-chk" data-kind="exp" data-row="${
           e.row
-        }" data-amount="${
-        e.amount
-      }" checked onchange="recalcDispatchPreview()" style="width:18px;height:18px;">
+        }" data-amount="${e.amount}" checked onchange="recalcDispatchPreview()">
         <span>${formatHumanDate(e.date)} · Расход: <b>${e.amount} грн</b> ${
         e.note ? `(${e.note})` : ""
       }</span>
@@ -327,12 +322,10 @@ function renderCashStats() {
 
     payItems.forEach((p) => {
       const eName = empMap[p.empId] || p.empId;
-      flowHtml += `<label style="display:flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;">
+      flowHtml += `<label class="chk-row">
         <input type="checkbox" class="comp-chk" data-kind="pay" data-row="${
           p.row
-        }" data-amount="${
-        p.amount
-      }" checked onchange="recalcDispatchPreview()" style="width:18px;height:18px;">
+        }" data-amount="${p.amount}" checked onchange="recalcDispatchPreview()">
         <span>${formatHumanDate(p.date)} · З/П (${eName}): <b>${
         p.amount
       } грн</b></span>
@@ -389,7 +382,6 @@ async function closeCashBatch() {
   });
   await loadData();
 }
-
 // Отрисовка списка всех проведённых отправок из листа Отправки
 function renderDispatchesList() {
   if (!APP_DATA) return;
@@ -398,26 +390,22 @@ function renderDispatchesList() {
 
   if (!list.length) {
     box.innerHTML =
-      "<div style='color:#64748b;font-size:14px;'>Пока нет проведённых отправок</div>";
+      '<div class="empty-msg">Пока нет проведённых отправок</div>';
     return;
   }
 
   box.innerHTML = list
     .map(
       (d) => `
-    <div class="log-row" style="cursor:pointer;padding:10px 6px;" onclick="openDispatchDetail('${
-      d.id
-    }')">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="log-row disp-row" onclick="openDispatchDetail('${d.id}')">
+      <div class="disp-row-inner">
         <div>
-          <div style="font-weight:800;font-size:15px;color:#2563eb;">Отправка №${
+          <div class="fw-800 txt-md txt-blue">Отправка №${
             d.id
           } · ${formatHumanDate(d.date)}</div>
           <div class="log-meta">${d.who}${d.note ? ` · ${d.note}` : ""}</div>
         </div>
-        <div style="font-weight:800;font-size:16px;color:#15803d;">${
-          d.amount
-        } грн ›</div>
+        <div class="fw-800 txt-lg txt-green">${d.amount} грн ›</div>
       </div>
     </div>
   `
@@ -475,43 +463,41 @@ function openDispatchDetail(dispId) {
   let html = Object.keys(boxSums)
     .map(
       (b) => `
-    <div class="emp-bal" style="padding:6px 0;">
-      <span class="emp-name" style="font-size:14px;">${b}</span>
-      <span style="font-weight:700;font-size:14px;">${boxSums[b]} грн</span>
+    <div class="emp-bal bal-sm">
+      <span class="emp-name name-sm">${b}</span>
+      <span class="fw-700 txt-sm">${boxSums[b]} грн</span>
     </div>
   `
     )
     .join("");
 
   html += `
-    <div class="emp-bal" style="border-top:1px solid #cbd5e1;margin-top:4px;padding-top:8px;">
-      <span style="font-weight:700;font-size:15px;">Собрано с боксов</span>
-      <span style="font-weight:800;font-size:16px;">${totalBoxes} грн</span>
+    <div class="emp-bal bal-sub">
+      <span class="fw-700 txt-md">Собрано с боксов</span>
+      <span class="fw-800 txt-lg">${totalBoxes} грн</span>
     </div>
-    <div class="emp-bal" style="padding:6px 0;color:#dc2626;">
-      <span style="font-size:14px;">Компенсация в кассу (Терм: ${termSum}, Расх: ${expSum}, З/П: ${zpSum})</span>
-      <span style="font-weight:700;font-size:15px;">−${totalComp} грн</span>
+    <div class="emp-bal bal-sm txt-red">
+      <span class="txt-sm">Компенсация в кассу (Терм: ${termSum}, Расх: ${expSum}, З/П: ${zpSum})</span>
+      <span class="fw-700 txt-md">−${totalComp} грн</span>
     </div>
-    <div class="emp-bal" style="border-top:1px solid #cbd5e1;padding-top:8px;">
-      <span style="font-size:14px;color:#475569;">Должно отправиться (за вычетами)</span>
-      <span style="font-weight:700;font-size:15px;">${expectedNet} грн</span>
+    <div class="emp-bal bal-sub-clean">
+      <span class="txt-sm txt-slate">Должно отправиться (за вычетами)</span>
+      <span class="fw-700 txt-md">${expectedNet} грн</span>
     </div>
-    <div class="emp-bal" style="padding:6px 0;">
-      <span style="font-weight:800;font-size:16px;">ФАКТИЧЕСКИ ОТПРАВЛЕНО</span>
-      <span class="debt-val ok" style="font-size:18px;">${factNet} грн</span>
+    <div class="emp-bal bal-sm">
+      <span class="fw-800 txt-lg">ФАКТИЧЕСКИ ОТПРАВЛЕНО</span>
+      <span class="debt-val ok txt-xl">${factNet} грн</span>
     </div>
-    <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:8px;">
-      <span style="font-weight:700;font-size:14px;">Разница (факт − расчёт)</span>
-      <span style="font-weight:800;font-size:15px;color:${
-        diff === 0 ? "#15803d" : "#dc2626"
-      };">
+    <div class="emp-bal bal-total-sm">
+      <span class="fw-700 txt-sm">Разница (факт − расчёт)</span>
+      <span class="fw-800 txt-md ${diff === 0 ? "txt-green" : "txt-red"}">
         ${diff === 0 ? "0 грн (Сошлось)" : `${diff > 0 ? "+" : ""}${diff} грн`}
       </span>
     </div>
   `;
 
   if (disp.note) {
-    html += `<div style="margin-top:8px;font-size:13px;color:#475569;"><b>Примечание:</b> ${disp.note}</div>`;
+    html += `<div class="disp-note"><b>Примечание:</b> ${disp.note}</div>`;
   }
 
   const details = [];
@@ -538,7 +524,7 @@ function openDispatchDetail(dispId) {
   );
 
   if (details.length) {
-    html += `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:12px;color:#475569;"><b>Скомпенсировано в кассу:</b><br>• ${details.join(
+    html += `<div class="dashed-box"><b>Скомпенсировано в кассу:</b><br>• ${details.join(
       "<br>• "
     )}</div>`;
   }
@@ -594,8 +580,7 @@ function renderMatrixTable() {
   const dates = Object.keys(byDate).sort().reverse();
   const box = document.getElementById("matrix-table-box");
   if (!dates.length) {
-    box.innerHTML =
-      "<div style='color:#64748b;font-size:14px;'>Пока нет проведённых сборов</div>";
+    box.innerHTML = '<div class="empty-msg">Пока нет проведённых сборов</div>';
     return;
   }
 
@@ -620,8 +605,8 @@ function renderMatrixTable() {
       const mTot = { b1: 0, b2: 0, b3: 0, b4: 0, b5: 0, pil: 0, all: 0 };
 
       bodyHtml += `
-      <tr style="background:#eff6ff;color:#1e3a8a;font-weight:800;">
-        <td colspan="8" style="text-align:left;padding:8px 6px;font-size:13px;">📅 ${mTitle}</td>
+      <tr class="matrix-month">
+        <td colspan="8">📅 ${mTitle}</td>
       </tr>
     `;
 
@@ -639,8 +624,8 @@ function renderMatrixTable() {
         const dp = d.split("-");
         const shortD = `${Number(dp.at(2))}.${dp.at(1)}`;
         bodyHtml += `
-        <tr style="cursor:pointer;" onclick="openDateFromMatrix('${d}')" title="Открыть сводку за ${shortD}">
-          <td style="text-align:left;"><b style="color:#2563eb;text-decoration:underline;">${shortD}</b></td>
+        <tr class="matrix-day" onclick="openDateFromMatrix('${d}')" title="Открыть сводку за ${shortD}">
+          <td><b class="matrix-date-link">${shortD}</b></td>
           <td>${r.b1 || "-"}</td>
           <td>${r.b2 || "-"}</td>
           <td>${r.b3 || "-"}</td>
@@ -653,8 +638,8 @@ function renderMatrixTable() {
       });
 
       bodyHtml += `
-      <tr style="background:#f1f5f9;font-weight:800;color:#0f172a;">
-        <td style="text-align:left;">Итого</td>
+      <tr class="matrix-subtot">
+        <td>Итого</td>
         <td>${mTot.b1}</td>
         <td>${mTot.b2}</td>
         <td>${mTot.b3}</td>
@@ -675,8 +660,8 @@ function renderMatrixTable() {
     });
 
   bodyHtml += `
-    <tr style="background:#dcfce7;font-weight:800;color:#14532d;border-top:2px solid #94a3b8;">
-      <td style="text-align:left;">ВСЕГО</td>
+    <tr class="matrix-grandtot">
+      <td>ВСЕГО</td>
       <td>${grandTot.b1}</td>
       <td>${grandTot.b2}</td>
       <td>${grandTot.b3}</td>
@@ -689,10 +674,10 @@ function renderMatrixTable() {
 
   box.innerHTML = `
     <div class="table-wrap">
-      <table class="rep-table" style="font-size:12px;text-align:center;">
+      <table class="rep-table matrix-table">
         <thead>
           <tr>
-            <th style="text-align:left;">Дата</th>
+            <th>Дата</th>
             <th>1</th>
             <th>2</th>
             <th>3</th>
@@ -730,7 +715,7 @@ function initDateReport() {
   if (!sortedDates.length) {
     sel.innerHTML = `<option value="">Нет закрытых дат</option>`;
     document.getElementById("date-report-box").innerHTML =
-      "<div style='color:#64748b;font-size:14px;'>Пока нет отправленных сборов</div>";
+      '<div class="empty-msg">Пока нет отправленных сборов</div>';
     return;
   }
   sel.innerHTML = sortedDates
@@ -796,31 +781,31 @@ function renderDateReport() {
   let html = Object.keys(boxSums)
     .map(
       (b) => `
-    <div class="emp-bal" style="padding:6px 0;">
-      <span class="emp-name" style="font-size:14px;">${b}</span>
-      <span style="font-weight:700;font-size:14px;">${boxSums[b]} грн</span>
+    <div class="emp-bal bal-sm">
+      <span class="emp-name name-sm">${b}</span>
+      <span class="fw-700 txt-sm">${boxSums[b]} грн</span>
     </div>
   `
     )
     .join("");
 
   html += `
-    <div class="emp-bal" style="border-top:1px solid #cbd5e1;margin-top:4px;padding-top:8px;">
-      <span style="font-weight:700;font-size:15px;">Всего с боксов</span>
-      <span style="font-weight:800;font-size:16px;">${totalBoxes} грн</span>
+    <div class="emp-bal bal-sub">
+      <span class="fw-700 txt-md">Всего с боксов</span>
+      <span class="fw-800 txt-lg">${totalBoxes} грн</span>
     </div>
-    <div class="emp-bal" style="padding:6px 0;color:#dc2626;">
-      <span style="font-size:15px;">Компенсация в кассу </span>
-      <span style="font-weight:700;font-size:16px;">−${totalComp} грн</span>
+    <div class="emp-bal bal-sm txt-red">
+      <span class="txt-md">Компенсация в кассу</span>
+      <span class="fw-700 txt-lg">−${totalComp} грн</span>
     </div>
-    <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:10px;">
-      <span style="font-weight:800;font-size:16px;">ОТПРАВЛЕНО ЧИСТЫМИ</span>
-      <span class="debt-val ok" style="font-size:18px;">${netSent} грн</span>
+    <div class="emp-bal bal-total">
+      <span class="fw-800 txt-lg">ОТПРАВЛЕНО ЧИСТЫМИ</span>
+      <span class="debt-val ok txt-xl">${netSent} грн</span>
     </div>
   `;
 
   if (expList.length) {
-    html += `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:12px;color:#475569;"><b>Расходы:</b><br>• ${expList.join(
+    html += `<div class="dashed-box"><b>Расходы:</b><br>• ${expList.join(
       "<br>• "
     )}</div>`;
   }
