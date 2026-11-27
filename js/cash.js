@@ -222,28 +222,28 @@ function renderCashStats() {
   let boxHtml = Object.keys(boxSums)
     .map(
       (b) => `
-    <div class="emp-bal bal-sm">
-      <span class="emp-name name-sm">${b}</span>
-      <span class="fw-700 txt-sm">${boxSums[b]} грн</span>
+    <div class="u-item u-item--compact">
+      <span class="u-bold txt-sm">${b}</span>
+      <span class="u-bold txt-sm">${boxSums[b]} грн</span>
     </div>
   `
     )
     .join("");
 
   boxHtml += `
-    <div class="emp-bal bal-sub">
-      <span class="fw-700 txt-md">Всего с боксов</span>
-      <span class="fw-800 txt-lg" id="disp-boxes-total" data-val="${totalBoxes}">${totalBoxes} грн</span>
+    <div class="u-item u-item--sub">
+      <span class="u-bold txt-md">Всего с боксов</span>
+      <span class="u-heavy txt-lg" id="disp-boxes-total" data-val="${totalBoxes}">${totalBoxes} грн</span>
     </div>
-    <div class="emp-bal bal-sm txt-red">
+    <div class="u-item u-item--compact u-red">
       <span class="txt-sm">Компенсация в кассу</span>
-      <span class="fw-700 txt-md" id="disp-comp-val">−${totalComp} грн</span>
+      <span class="u-bold txt-md" id="disp-comp-val">−${totalComp} грн</span>
     </div>
-    <div class="emp-bal bal-total">
-      <span class="fw-800 txt-lg">${
+    <div class="u-item u-item--total">
+      <span class="u-heavy txt-lg">${
         period === "pending" ? "К ОТПРАВКЕ" : "СБОРЫ ЗА ПЕРИОД"
       }</span>
-      <span class="debt-val ok txt-xl" id="disp-net-val">${netToSend} грн</span>
+      <span class="u-heavy u-green txt-xl" id="disp-net-val">${netToSend} грн</span>
     </div>
   `;
 
@@ -253,11 +253,11 @@ function renderCashStats() {
     (totalBoxes > 0 || totalComp > 0)
   ) {
     boxHtml += `
-      <div class="dashed-box no-print">
-        <div class="field-label">Фактически отправлено, грн (можно исправить при расхождении):</div>
-        <input type="number" id="disp-fact-amount" class="field field-fact" value="${netToSend}">
-        <input type="text" id="disp-note" class="field field-sm" placeholder="Примечание к отправке (необязательно)">
-        <button class="btn-primary btn-blue" onclick="closeCashBatch()">
+      <div class="u-dashed no-print">
+        <div class="u-hint u-mb-sm">Фактически отправлено, грн (можно исправить при расхождении):</div>
+        <input type="number" id="disp-fact-amount" class="u-input u-heavy u-mb-sm" value="${netToSend}">
+        <input type="text" id="disp-note" class="u-input u-mb-sm" placeholder="Примечание к отправке (необязательно)">
+        <button class="u-btn u-btn--blue u-btn--full" onclick="closeCashBatch()">
           ✅ Провести отправку
         </button>
       </div>
@@ -270,33 +270,33 @@ function renderCashStats() {
   flowCard.classList.toggle("hidden", period !== "pending");
 
   let flowHtml = `
-    <div class="emp-bal bal-sm">
-      <span class="txt-sm txt-muted">Норматив кассы (база)</span>
-      <span class="fw-700">${cashBase} грн</span>
+    <div class="u-item u-item--compact">
+      <span class="txt-sm u-muted">Норматив кассы (база)</span>
+      <span class="u-bold">${cashBase} грн</span>
     </div>
-    <div class="emp-bal bal-sm">
+    <div class="u-item u-item--compact">
       <span class="txt-sm">Выдача по терминалу (чеки)</span>
-      <span class="fw-700 txt-red">−${termSum} грн</span>
+      <span class="u-bold u-red">−${termSum} грн</span>
     </div>
-    <div class="emp-bal bal-sm">
+    <div class="u-item u-item--compact">
       <span class="txt-sm">Расходы (материалы и др.)</span>
-      <span class="fw-700 txt-red">−${expSum} грн</span>
+      <span class="u-bold u-red">−${expSum} грн</span>
     </div>
-    <div class="emp-bal bal-sm">
+    <div class="u-item u-item--compact">
       <span class="txt-sm">Выплата ЗП сотрудникам</span>
-      <span class="fw-700 txt-red">−${zpSum} грн</span>
+      <span class="u-bold u-red">−${zpSum} грн</span>
     </div>
-    <div class="emp-bal bal-sub-clean">
-      <span class="fw-700 txt-sm">Наличных в кассе до компенсации</span>
-      <span class="fw-800 txt-md txt-blue" id="disp-cash-remain">${
+    <div class="u-item u-item--sub">
+      <span class="u-bold txt-sm">Наличных в кассе до компенсации</span>
+      <span class="u-heavy txt-md u-blue" id="disp-cash-remain">${
         cashBase - totalComp
       } грн</span>
     </div>
   `;
 
   if (termItems.length || expItems.length || payItems.length) {
-    flowHtml += `<div class="dashed-box">
-      <div class="dashed-title">Отметьте галочкой, что компенсируем в кассу сейчас:</div>`;
+    flowHtml += `<div class="u-dashed">
+      <div class="u-bold u-mb-sm">Отметьте галочкой, что компенсируем в кассу сейчас:</div>`;
 
     termItems.forEach((t) => {
       flowHtml += `<label class="chk-row">
@@ -390,7 +390,7 @@ function renderDispatchesList() {
 
   if (!list.length) {
     box.innerHTML =
-      '<div class="empty-msg">Пока нет проведённых отправок</div>';
+      '<div class="u-muted txt-sm">Пока нет проведённых отправок</div>';
     return;
   }
 
@@ -398,14 +398,14 @@ function renderDispatchesList() {
     .map(
       (d) => `
     <div class="log-row disp-row" onclick="openDispatchDetail('${d.id}')">
-      <div class="disp-row-inner">
+      <div class="u-between">
         <div>
-          <div class="fw-800 txt-md txt-blue">Отправка №${
+          <div class="u-heavy txt-md u-blue">Отправка №${
             d.id
           } · ${formatHumanDate(d.date)}</div>
           <div class="log-meta">${d.who}${d.note ? ` · ${d.note}` : ""}</div>
         </div>
-        <div class="fw-800 txt-lg txt-green">${d.amount} грн ›</div>
+        <div class="u-heavy txt-lg u-green">${d.amount} грн ›</div>
       </div>
     </div>
   `
@@ -463,34 +463,34 @@ function openDispatchDetail(dispId) {
   let html = Object.keys(boxSums)
     .map(
       (b) => `
-    <div class="emp-bal bal-sm">
-      <span class="emp-name name-sm">${b}</span>
-      <span class="fw-700 txt-sm">${boxSums[b]} грн</span>
+    <div class="u-item u-item--compact">
+      <span class="u-bold txt-sm">${b}</span>
+      <span class="u-bold txt-sm">${boxSums[b]} грн</span>
     </div>
   `
     )
     .join("");
 
   html += `
-    <div class="emp-bal bal-sub">
-      <span class="fw-700 txt-md">Собрано с боксов</span>
-      <span class="fw-800 txt-lg">${totalBoxes} грн</span>
+    <div class="u-item u-item--sub">
+      <span class="u-bold txt-md">Собрано с боксов</span>
+      <span class="u-heavy txt-lg">${totalBoxes} грн</span>
     </div>
-    <div class="emp-bal bal-sm txt-red">
+    <div class="u-item u-item--compact u-red">
       <span class="txt-sm">Компенсация в кассу (Терм: ${termSum}, Расх: ${expSum}, З/П: ${zpSum})</span>
-      <span class="fw-700 txt-md">−${totalComp} грн</span>
+      <span class="u-bold txt-md">−${totalComp} грн</span>
     </div>
-    <div class="emp-bal bal-sub-clean">
-      <span class="txt-sm txt-slate">Должно отправиться (за вычетами)</span>
-      <span class="fw-700 txt-md">${expectedNet} грн</span>
+    <div class="u-item u-item--sub">
+      <span class="txt-sm u-muted">Должно отправиться (за вычетами)</span>
+      <span class="u-bold txt-md">${expectedNet} грн</span>
     </div>
-    <div class="emp-bal bal-sm">
-      <span class="fw-800 txt-lg">ФАКТИЧЕСКИ ОТПРАВЛЕНО</span>
-      <span class="debt-val ok txt-xl">${factNet} грн</span>
+    <div class="u-item u-item--compact">
+      <span class="u-heavy txt-lg">ФАКТИЧЕСКИ ОТПРАВЛЕНО</span>
+      <span class="u-heavy u-green txt-xl">${factNet} грн</span>
     </div>
-    <div class="emp-bal bal-total-sm">
-      <span class="fw-700 txt-sm">Разница (факт − расчёт)</span>
-      <span class="fw-800 txt-md ${diff === 0 ? "txt-green" : "txt-red"}">
+    <div class="u-item u-item--total">
+      <span class="u-bold txt-sm">Разница (факт − расчёт)</span>
+      <span class="u-heavy txt-md ${diff === 0 ? "u-green" : "u-red"}">
         ${diff === 0 ? "0 грн (Сошлось)" : `${diff > 0 ? "+" : ""}${diff} грн`}
       </span>
     </div>
@@ -524,7 +524,7 @@ function openDispatchDetail(dispId) {
   );
 
   if (details.length) {
-    html += `<div class="dashed-box"><b>Скомпенсировано в кассу:</b><br>• ${details.join(
+    html += `<div class="u-dashed"><b>Скомпенсировано в кассу:</b><br>• ${details.join(
       "<br>• "
     )}</div>`;
   }
@@ -532,7 +532,6 @@ function openDispatchDetail(dispId) {
   document.getElementById("disp-detail-box").innerHTML = html;
   toggleCashSub("dispatch-detail");
 }
-
 // Переход из сводной таблицы сборов в детальный отчёт за выбранный день по клику на строку
 function openDateFromMatrix(isoDate) {
   toggleCashSub("date");
@@ -580,7 +579,8 @@ function renderMatrixTable() {
   const dates = Object.keys(byDate).sort().reverse();
   const box = document.getElementById("matrix-table-box");
   if (!dates.length) {
-    box.innerHTML = '<div class="empty-msg">Пока нет проведённых сборов</div>';
+    box.innerHTML =
+      '<div class="u-muted txt-sm">Пока нет проведённых сборов</div>';
     return;
   }
 
@@ -715,7 +715,7 @@ function initDateReport() {
   if (!sortedDates.length) {
     sel.innerHTML = `<option value="">Нет закрытых дат</option>`;
     document.getElementById("date-report-box").innerHTML =
-      '<div class="empty-msg">Пока нет отправленных сборов</div>';
+      '<div class="u-muted txt-sm">Пока нет отправленных сборов</div>';
     return;
   }
   sel.innerHTML = sortedDates
@@ -781,31 +781,31 @@ function renderDateReport() {
   let html = Object.keys(boxSums)
     .map(
       (b) => `
-    <div class="emp-bal bal-sm">
-      <span class="emp-name name-sm">${b}</span>
-      <span class="fw-700 txt-sm">${boxSums[b]} грн</span>
+    <div class="u-item u-item--compact">
+      <span class="u-bold txt-sm">${b}</span>
+      <span class="u-bold txt-sm">${boxSums[b]} грн</span>
     </div>
   `
     )
     .join("");
 
   html += `
-    <div class="emp-bal bal-sub">
-      <span class="fw-700 txt-md">Всего с боксов</span>
-      <span class="fw-800 txt-lg">${totalBoxes} грн</span>
+    <div class="u-item u-item--sub">
+      <span class="u-bold txt-md">Всего с боксов</span>
+      <span class="u-heavy txt-lg">${totalBoxes} грн</span>
     </div>
-    <div class="emp-bal bal-sm txt-red">
+    <div class="u-item u-item--compact u-red">
       <span class="txt-md">Компенсация в кассу</span>
-      <span class="fw-700 txt-lg">−${totalComp} грн</span>
+      <span class="u-bold txt-lg">−${totalComp} грн</span>
     </div>
-    <div class="emp-bal bal-total">
-      <span class="fw-800 txt-lg">ОТПРАВЛЕНО ЧИСТЫМИ</span>
-      <span class="debt-val ok txt-xl">${netSent} грн</span>
+    <div class="u-item u-item--total">
+      <span class="u-heavy txt-lg">ОТПРАВЛЕНО ЧИСТЫМИ</span>
+      <span class="u-heavy u-green txt-xl">${netSent} грн</span>
     </div>
   `;
 
   if (expList.length) {
-    html += `<div class="dashed-box"><b>Расходы:</b><br>• ${expList.join(
+    html += `<div class="u-dashed"><b>Расходы:</b><br>• ${expList.join(
       "<br>• "
     )}</div>`;
   }
