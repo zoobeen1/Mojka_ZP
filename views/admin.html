@@ -7,6 +7,29 @@
 
 <div id="tab-perms" class="tab-view hidden">
   <div class="panel">
+    <h3>Настройки кассы</h3>
+    <div style="font-size: 13px; color: #64748b; margin-bottom: 6px">
+      Норматив операционной кассы (база), грн
+    </div>
+    <div style="display: flex; gap: 8px">
+      <input
+        type="number"
+        id="set-cash-base"
+        class="field"
+        style="margin-bottom: 0; flex: 1"
+        placeholder="4500"
+      />
+      <button
+        class="btn-primary"
+        style="width: auto; padding: 10px 18px"
+        onclick="saveSettings()"
+      >
+        Сохранить
+      </button>
+    </div>
+  </div>
+
+  <div class="panel">
     <h3>Настройка прав ролей</h3>
     <div id="perms-box"></div>
     <button

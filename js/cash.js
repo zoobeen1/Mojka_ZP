@@ -1,16 +1,29 @@
-// Переключение между главным экраном кассы, матрицей боксов и отчётом за дату
+// Переключение между экранами раздела Касса (главная, список отправок, детализация отправки, матрица боксов, дата)
 function toggleCashSub(sub) {
   document
     .getElementById("cash-main-view")
     .classList.toggle("hidden", sub !== "main");
+  document
+    .getElementById("cash-dispatches-view")
+    .classList.toggle("hidden", sub !== "dispatches");
+  document
+    .getElementById("cash-dispatch-detail-view")
+    .classList.toggle("hidden", sub !== "dispatch-detail");
   document
     .getElementById("cash-matrix-view")
     .classList.toggle("hidden", sub !== "matrix");
   document
     .getElementById("cash-tx-view")
     .classList.toggle("hidden", sub !== "date");
+
+  if (sub === "dispatches") renderDispatchesList();
   if (sub === "matrix") renderMatrixTable();
   if (sub === "date") initDateReport();
+}
+
+// Получение актуального норматива операционной кассы из настроек таблицы (по умолчанию 4500)
+function getCurrentCashBase() {
+  return Number(APP_DATA?.cashBase) || CASH_BASE || 4500;
 }
 
 // Открытие модального окна с таблицей покупюрного сбора по боксам
@@ -70,7 +83,7 @@ function recalcCashModal() {
   document.getElementById("ctotal-bills").textContent = grandBills;
 }
 
-// Отправка данных покупюрного сбора с боксов в Google Таблицу
+// Отправка данных покупюрного сбора с боксов в лист Сборы
 async function submitCashModal() {
   const date = document.getElementById("cash-date").value;
   const rows = [];
@@ -95,7 +108,7 @@ async function submitCashModal() {
   await loadData();
 }
 
-// Открытие модального окна для записи расхода из кассы (терминал / материалы)
+// Открытие модального окна для записи чека терминала или расхода из кассы
 function openExpModal() {
   document.getElementById("exp-date").value = getLocalToday();
   document.getElementById("exp-amount").value = "";
@@ -103,12 +116,12 @@ function openExpModal() {
   document.getElementById("exp-modal").classList.remove("hidden");
 }
 
-// Закрытие окна расхода из кассы
+// Закрытие окна расхода / терминала
 function closeExpModal() {
   document.getElementById("exp-modal").classList.add("hidden");
 }
 
-// Отправка расхода из кассы (терминал или материалы) в Google Таблицу
+// Отправка чека терминала (в лист Терминал) или хозрасхода (в лист Расходы)
 async function submitExpModal() {
   const date = document.getElementById("exp-date").value;
   const type = document.getElementById("exp-type").value;
@@ -122,7 +135,7 @@ async function submitExpModal() {
   await loadData();
 }
 
-// Проверка, попадает ли операция в выбранный фильтр (Ожидает, Сегодня, Неделя, Месяц)
+// Проверка попадания операции в выбранный фильтр (К отправке / Сегодня / Неделя / Месяц)
 function matchPeriod(item, period, todayStr, monDate, monthPrefix) {
   if (period === "pending") return Boolean(item.pending);
   if (item.pending) return false;
@@ -137,10 +150,35 @@ function matchPeriod(item, period, todayStr, monDate, monthPrefix) {
   return true;
 }
 
-// Отрисовка сводки выручки по боксам, компенсации в кассу 4500 грн и суммы к отправке
+// Живой пересчёт суммы компенсации и итога к отправке при снятии/установке галочек
+function recalcDispatchPreview() {
+  const totalBoxes =
+    Number(document.getElementById("disp-boxes-total")?.dataset.val) || 0;
+  const cashBase = getCurrentCashBase();
+  let selectedComp = 0;
+
+  document.querySelectorAll(".comp-chk:checked").forEach((chk) => {
+    selectedComp += Number(chk.dataset.amount) || 0;
+  });
+
+  const netToSend = totalBoxes - selectedComp;
+  const compEl = document.getElementById("disp-comp-val");
+  const netEl = document.getElementById("disp-net-val");
+  const cashRemainEl = document.getElementById("disp-cash-remain");
+
+  if (compEl) compEl.textContent = `−${selectedComp} грн`;
+  if (netEl) netEl.textContent = `${netToSend} грн`;
+  if (cashRemainEl) cashRemainEl.textContent = `${cashBase - selectedComp} грн`;
+}
+// Отрисовка сводки выручки по боксам и списка чеков/выплат с галочками для гибкой компенсации
 function renderCashStats() {
   if (!APP_DATA) return;
   const period = document.getElementById("cash-period").value;
+  const cashBase = getCurrentCashBase();
+  const baseTitle = document.getElementById("cash-base-title");
+  if (baseTitle)
+    baseTitle.textContent = `Движение по кассе (база ${cashBase} грн)`;
+
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const todayStr = getLocalToday();
@@ -148,6 +186,9 @@ function renderCashStats() {
   const mon = new Date(now);
   mon.setDate(now.getDate() - (dow - 1));
   const monthPrefix = todayStr.slice(0, 7);
+
+  const empMap = {};
+  (APP_DATA.employees || []).forEach((e) => (empMap[e.id] = e.name));
 
   const boxSums = {};
   CASH_BOXES.forEach((b) => (boxSums[b] = 0));
@@ -160,31 +201,21 @@ function renderCashStats() {
     totalBoxes += c.sum;
   });
 
-  let termSum = 0,
-    matSum = 0,
-    zpSum = 0;
-  const expDetails = [];
+  const termItems = (APP_DATA.terminal || []).filter((t) =>
+    matchPeriod(t, period, todayStr, mon, monthPrefix)
+  );
+  const expItems = (APP_DATA.expenses || []).filter((e) =>
+    matchPeriod(e, period, todayStr, mon, monthPrefix)
+  );
+  const payItems = (APP_DATA.payments || []).filter((p) =>
+    matchPeriod(p, period, todayStr, mon, monthPrefix)
+  );
 
-  (APP_DATA.cashExp || []).forEach((e) => {
-    if (!matchPeriod(e, period, todayStr, mon, monthPrefix)) return;
-    if (e.type.includes("Терминал")) termSum += e.amount;
-    else matSum += e.amount;
-    expDetails.push({
-      date: e.date,
-      type: e.type,
-      amount: e.amount,
-      note: e.note,
-    });
-  });
-
-  (APP_DATA.payments || []).forEach((p) => {
-    if (!matchPeriod(p, period, todayStr, mon, monthPrefix)) return;
-    zpSum += p.amount;
-  });
-
-  const totalComp = termSum + matSum + zpSum;
+  const termSum = termItems.reduce((acc, i) => acc + i.amount, 0);
+  const expSum = expItems.reduce((acc, i) => acc + i.amount, 0);
+  const zpSum = payItems.reduce((acc, i) => acc + i.amount, 0);
+  const totalComp = termSum + expSum + zpSum;
   const netToSend = totalBoxes - totalComp;
-  const currentCashInBox = CASH_BASE - totalComp;
 
   let boxHtml = Object.keys(boxSums)
     .map(
@@ -200,17 +231,17 @@ function renderCashStats() {
   boxHtml += `
     <div class="emp-bal" style="border-top:1px solid #cbd5e1;margin-top:4px;padding-top:8px;">
       <span style="font-weight:700;font-size:15px;">Всего с боксов</span>
-      <span style="font-weight:800;font-size:16px;">${totalBoxes} грн</span>
+      <span style="font-weight:800;font-size:16px;" id="disp-boxes-total" data-val="${totalBoxes}">${totalBoxes} грн</span>
     </div>
     <div class="emp-bal" style="padding:6px 0;color:#dc2626;">
       <span style="font-size:14px;">Компенсация в кассу</span>
-      <span style="font-weight:700;font-size:15px;">−${totalComp} грн</span>
+      <span style="font-weight:700;font-size:15px;" id="disp-comp-val">−${totalComp} грн</span>
     </div>
     <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:10px;">
       <span style="font-weight:800;font-size:16px;">${
-        period === "pending" ? "К ОТПРАВКЕ" : "ОТПРАВЛЕНО ЧИСТЫМИ"
+        period === "pending" ? "К ОТПРАВКЕ" : "СБОРЫ ЗА ПЕРИОД"
       }</span>
-      <span class="debt-val ok" style="font-size:18px;">${netToSend} грн</span>
+      <span class="debt-val ok" style="font-size:18px;" id="disp-net-val">${netToSend} грн</span>
     </div>
   `;
 
@@ -220,8 +251,9 @@ function renderCashStats() {
     (totalBoxes > 0 || totalComp > 0)
   ) {
     boxHtml += `
-      <button class="btn-primary no-print" style="margin-top:12px;background:#2563eb;" onclick="closeCashBatch(${netToSend}, ${totalComp})">
-        ✅ Отправлено (скомпенсировать ${totalComp} грн)
+      <input type="text" id="disp-note" class="field no-print" style="margin-top:10px;margin-bottom:8px;" placeholder="Примечание к отправке (необязательно)">
+      <button class="btn-primary no-print" style="background:#2563eb;" onclick="closeCashBatch()">
+        ✅ Провести отправку
       </button>
     `;
   }
@@ -234,15 +266,15 @@ function renderCashStats() {
   let flowHtml = `
     <div class="emp-bal" style="padding:6px 0;">
       <span style="font-size:14px;color:#64748b;">Норматив кассы (база)</span>
-      <span style="font-weight:700;">${CASH_BASE} грн</span>
+      <span style="font-weight:700;">${cashBase} грн</span>
     </div>
     <div class="emp-bal" style="padding:6px 0;">
       <span style="font-size:14px;">Выдача по терминалу (чеки)</span>
       <span style="font-weight:700;color:#dc2626;">−${termSum} грн</span>
     </div>
     <div class="emp-bal" style="padding:6px 0;">
-      <span style="font-size:14px;">Закупка материалов</span>
-      <span style="font-weight:700;color:#dc2626;">−${matSum} грн</span>
+      <span style="font-size:14px;">Расходы (материалы и др.)</span>
+      <span style="font-weight:700;color:#dc2626;">−${expSum} грн</span>
     </div>
     <div class="emp-bal" style="padding:6px 0;">
       <span style="font-size:14px;">Выплата ЗП сотрудникам</span>
@@ -250,39 +282,230 @@ function renderCashStats() {
     </div>
     <div class="emp-bal" style="border-top:1px solid #cbd5e1;padding-top:8px;">
       <span style="font-weight:700;font-size:14px;">Наличных в кассе до компенсации</span>
-      <span style="font-weight:800;font-size:15px;color:#2563eb;">${currentCashInBox} грн</span>
+      <span style="font-weight:800;font-size:15px;color:#2563eb;" id="disp-cash-remain">${
+        cashBase - totalComp
+      } грн</span>
     </div>
   `;
 
-  if (expDetails.length) {
-    flowHtml += `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:12px;color:#475569;"><b>Чеки и примечания:</b>`;
-    expDetails
-      .slice()
-      .reverse()
-      .forEach((item) => {
-        flowHtml += `<div style="margin-top:4px;">• ${formatHumanDate(
-          item.date
-        )} — ${item.type}: <b>${item.amount} грн</b> ${
-          item.note ? `(${item.note})` : ""
-        }</div>`;
-      });
+  if (termItems.length || expItems.length || payItems.length) {
+    flowHtml += `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:12px;color:#475569;">
+      <div style="font-weight:700;margin-bottom:6px;">Отметьте галочкой, что компенсируем в кассу сейчас:</div>`;
+
+    termItems.forEach((t) => {
+      flowHtml += `<label style="display:flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;">
+        <input type="checkbox" class="comp-chk" data-kind="term" data-row="${
+          t.row
+        }" data-amount="${
+        t.amount
+      }" checked onchange="recalcDispatchPreview()" style="width:18px;height:18px;">
+        <span>${formatHumanDate(t.date)} · Терминал: <b>${t.amount} грн</b> ${
+        t.note ? `(${t.note})` : ""
+      }</span>
+      </label>`;
+    });
+
+    expItems.forEach((e) => {
+      flowHtml += `<label style="display:flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;">
+        <input type="checkbox" class="comp-chk" data-kind="exp" data-row="${
+          e.row
+        }" data-amount="${
+        e.amount
+      }" checked onchange="recalcDispatchPreview()" style="width:18px;height:18px;">
+        <span>${formatHumanDate(e.date)} · Расход: <b>${e.amount} грн</b> ${
+        e.note ? `(${e.note})` : ""
+      }</span>
+      </label>`;
+    });
+
+    payItems.forEach((p) => {
+      const eName = empMap[p.empId] || p.empId;
+      flowHtml += `<label style="display:flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;">
+        <input type="checkbox" class="comp-chk" data-kind="pay" data-row="${
+          p.row
+        }" data-amount="${
+        p.amount
+      }" checked onchange="recalcDispatchPreview()" style="width:18px;height:18px;">
+        <span>${formatHumanDate(p.date)} · З/П (${eName}): <b>${
+        p.amount
+      } грн</b></span>
+      </label>`;
+    });
+
     flowHtml += `</div>`;
   }
+
   document.getElementById("cash-flow-summary").innerHTML = flowHtml;
 }
-// Закрытие текущего сбора: компенсация операционной кассы до 4500 грн и пометка операций как "Отправлено"
-async function closeCashBatch(netAmount, compAmount) {
-  if (
-    !confirm(
-      `Подтвердить, что в кассу возвращено ${compAmount} грн (до базы 4500 грн), а чистые ${netAmount} грн отправлены?`
-    )
-  )
-    return;
+
+// Проведение отправки: фиксирует сумму в лист Отправки и привязывает отмеченные галочкой расходы к этой отправке
+async function closeCashBatch() {
+  const totalBoxes =
+    Number(document.getElementById("disp-boxes-total")?.dataset.val) || 0;
+  const note = (document.getElementById("disp-note")?.value || "").trim();
+
+  const termRows = [];
+  const expRows = [];
+  const payRows = [];
+  let selectedComp = 0;
+
+  document.querySelectorAll(".comp-chk:checked").forEach((chk) => {
+    const kind = chk.dataset.kind;
+    const rowNum = Number(chk.dataset.row);
+    const amt = Number(chk.dataset.amount) || 0;
+    selectedComp += amt;
+    if (kind === "term") termRows.push(rowNum);
+    else if (kind === "exp") expRows.push(rowNum);
+    else if (kind === "pay") payRows.push(rowNum);
+  });
+
+  const netAmount = totalBoxes - selectedComp;
+  const msg = `Провести отправку?\n\n• Собрано с боксов: ${totalBoxes} грн\n• Компенсация в кассу: ${selectedComp} грн\n• ИТОГО К ОТПРАВКЕ: ${netAmount} грн`;
+  if (!confirm(msg)) return;
+
   document.getElementById("loader").style.display = "block";
-  await apiPost({ action: "close_cash_batch", netAmount });
+  await apiPost({
+    action: "close_cash_batch",
+    netAmount,
+    note,
+    termRows,
+    expRows,
+    payRows,
+  });
   await loadData();
 }
+// Отрисовка списка всех проведённых отправок из листа Отправки
+function renderDispatchesList() {
+  if (!APP_DATA) return;
+  const list = (APP_DATA.dispatches || []).slice().reverse();
+  const box = document.getElementById("dispatches-list-box");
 
+  if (!list.length) {
+    box.innerHTML =
+      "<div style='color:#64748b;font-size:14px;'>Пока нет проведённых отправок</div>";
+    return;
+  }
+
+  box.innerHTML = list
+    .map(
+      (d) => `
+    <div class="log-row" style="cursor:pointer;padding:10px 6px;" onclick="openDispatchDetail(${
+      d.id
+    })">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:800;font-size:15px;color:#2563eb;">Отправка #${
+            d.id
+          } · ${formatHumanDate(d.date)}</div>
+          <div class="log-meta">${d.who}${d.note ? ` · ${d.note}` : ""}</div>
+        </div>
+        <div style="font-weight:800;font-size:16px;color:#15803d;">${
+          d.amount
+        } грн ›</div>
+      </div>
+    </div>
+  `
+    )
+    .join("");
+}
+
+// Открытие полного расклада выбранной отправки на экране (побоксовка + все скомпенсированные чеки и выплаты)
+function openDispatchDetail(dispId) {
+  if (!APP_DATA) return;
+  const disp = (APP_DATA.dispatches || []).find((d) => d.id === dispId);
+  if (!disp) return;
+
+  const tag = `Отправка #${disp.id}`;
+  document.getElementById(
+    "disp-detail-title"
+  ).textContent = `${tag} от ${formatHumanDate(disp.date)}`;
+
+  const empMap = {};
+  (APP_DATA.employees || []).forEach((e) => (empMap[e.id] = e.name));
+
+  const boxSums = {};
+  CASH_BOXES.forEach((b) => (boxSums[b] = 0));
+  let totalBoxes = 0;
+
+  (APP_DATA.cash || []).forEach((c) => {
+    if (c.status === tag) {
+      if (boxSums[c.box] !== undefined) boxSums[c.box] += c.sum;
+      else boxSums[c.box] = (boxSums[c.box] || 0) + c.sum;
+      totalBoxes += c.sum;
+    }
+  });
+
+  const termItems = (APP_DATA.terminal || []).filter((t) => t.status === tag);
+  const expItems = (APP_DATA.expenses || []).filter((e) => e.status === tag);
+  const payItems = (APP_DATA.payments || []).filter((p) => p.status === tag);
+
+  const termSum = termItems.reduce((s, i) => s + i.amount, 0);
+  const expSum = expItems.reduce((s, i) => s + i.amount, 0);
+  const zpSum = payItems.reduce((s, i) => s + i.amount, 0);
+  const totalComp = termSum + expSum + zpSum;
+
+  let html = Object.keys(boxSums)
+    .map(
+      (b) => `
+    <div class="emp-bal" style="padding:6px 0;">
+      <span class="emp-name" style="font-size:14px;">${b}</span>
+      <span style="font-weight:700;font-size:14px;">${boxSums[b]} грн</span>
+    </div>
+  `
+    )
+    .join("");
+
+  html += `
+    <div class="emp-bal" style="border-top:1px solid #cbd5e1;margin-top:4px;padding-top:8px;">
+      <span style="font-weight:700;font-size:15px;">Собрано с боксов</span>
+      <span style="font-weight:800;font-size:16px;">${totalBoxes} грн</span>
+    </div>
+    <div class="emp-bal" style="padding:6px 0;color:#dc2626;">
+      <span style="font-size:14px;">Компенсация в кассу (Терм: ${termSum}, Расх: ${expSum}, З/П: ${zpSum})</span>
+      <span style="font-weight:700;font-size:15px;">−${totalComp} грн</span>
+    </div>
+    <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:10px;">
+      <span style="font-weight:800;font-size:16px;">ОТПРАВЛЕНО ЧИСТЫМИ</span>
+      <span class="debt-val ok" style="font-size:18px;">${disp.amount} грн</span>
+    </div>
+  `;
+
+  if (disp.note) {
+    html += `<div style="margin-top:8px;font-size:13px;color:#475569;"><b>Примечание:</b> ${disp.note}</div>`;
+  }
+
+  const details = [];
+  termItems.forEach((t) =>
+    details.push(
+      `${formatHumanDate(t.date)} · Терминал: <b>${t.amount} грн</b> ${
+        t.note ? `(${t.note})` : ""
+      }`
+    )
+  );
+  expItems.forEach((e) =>
+    details.push(
+      `${formatHumanDate(e.date)} · Расход: <b>${e.amount} грн</b> ${
+        e.note ? `(${e.note})` : ""
+      }`
+    )
+  );
+  payItems.forEach((p) =>
+    details.push(
+      `${formatHumanDate(p.date)} · З/П (${empMap[p.empId] || p.empId}): <b>${
+        p.amount
+      } грн</b>`
+    )
+  );
+
+  if (details.length) {
+    html += `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:12px;color:#475569;"><b>Скомпенсировано в кассу:</b><br>• ${details.join(
+      "<br>• "
+    )}</div>`;
+  }
+
+  document.getElementById("disp-detail-box").innerHTML = html;
+  toggleCashSub("dispatch-detail");
+}
 // Переход из сводной таблицы сборов в детальный отчёт за выбранный день по клику на строку
 function openDateFromMatrix(isoDate) {
   toggleCashSub("date");
@@ -328,12 +551,10 @@ function renderMatrixTable() {
     else if (c.box === "Пилосос") byDate[c.date].pil += c.sum;
   });
 
-  (APP_DATA.cashExp || []).forEach((e) => {
-    if (e.pending) return;
-    if (e.type.includes("Терминал")) {
-      ensureDate(e.date);
-      byDate[e.date].term += e.amount;
-    }
+  (APP_DATA.terminal || []).forEach((t) => {
+    if (t.pending) return;
+    ensureDate(t.date);
+    byDate[t.date].term += t.amount;
   });
 
   const dates = Object.keys(byDate).sort().reverse();
@@ -484,7 +705,10 @@ function initDateReport() {
   (APP_DATA.cash || []).forEach((c) => {
     if (!c.pending) datesSet.add(c.date);
   });
-  (APP_DATA.cashExp || []).forEach((e) => {
+  (APP_DATA.terminal || []).forEach((t) => {
+    if (!t.pending) datesSet.add(t.date);
+  });
+  (APP_DATA.expenses || []).forEach((e) => {
     if (!e.pending) datesSet.add(e.date);
   });
   (APP_DATA.payments || []).forEach((p) => {
@@ -505,7 +729,7 @@ function initDateReport() {
   renderDateReport();
 }
 
-// Отрисовка сводного отчёта по боксам и всем расходам (включая З/П) за выбранную дату
+// Отрисовка сводного отчёта по боксам и всем расходам (включая терминал и З/П) за выбранную дату
 function renderDateReport() {
   const targetDate = document.getElementById("tx-date-select").value;
   if (!targetDate || !APP_DATA) return;
@@ -530,12 +754,20 @@ function renderDateReport() {
     zpSum = 0;
   const expList = [];
 
-  (APP_DATA.cashExp || []).forEach((e) => {
-    if (!e.pending && e.date === targetDate) {
-      if (e.type.includes("Терминал")) termSum += e.amount;
-      else matSum += e.amount;
+  (APP_DATA.terminal || []).forEach((t) => {
+    if (!t.pending && t.date === targetDate) {
+      termSum += t.amount;
       expList.push(
-        `${e.type}: <b>${e.amount} грн</b> ${e.note ? `(${e.note})` : ""}`
+        `Терминал: <b>${t.amount} грн</b> ${t.note ? `(${t.note})` : ""}`
+      );
+    }
+  });
+
+  (APP_DATA.expenses || []).forEach((e) => {
+    if (!e.pending && e.date === targetDate) {
+      matSum += e.amount;
+      expList.push(
+        `Расход: <b>${e.amount} грн</b> ${e.note ? `(${e.note})` : ""}`
       );
     }
   });

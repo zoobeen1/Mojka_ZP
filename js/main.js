@@ -40,6 +40,9 @@ function renderAdmin(data) {
   document.getElementById("nav-logs").classList.remove("hidden");
   document.getElementById("nav-perms").classList.remove("hidden");
 
+  const baseInput = document.getElementById("set-cash-base");
+  if (baseInput) baseInput.value = data.cashBase || CASH_BASE;
+
   let tableHtml = `<table style="width:100%;font-size:13px;border-collapse:collapse;">
     <tr style="border-bottom:1px solid #e2e8f0;color:#64748b;">
       <th style="text-align:left;padding:6px 0;">Действие</th>
@@ -84,6 +87,15 @@ async function savePerms() {
   });
   document.getElementById("loader").style.display = "block";
   await apiPost({ action: "save_perms", perms: newPerms });
+  await loadData();
+}
+// Сохранение нового норматива операционной кассы в лист Настройки
+async function saveSettings() {
+  const newBase = Number(document.getElementById("set-cash-base").value);
+  if (!newBase || newBase < 0)
+    return alert("Введите корректную сумму норматива");
+  document.getElementById("loader").style.display = "block";
+  await apiPost({ action: "save_settings", cashBase: newBase });
   await loadData();
 }
 

@@ -14,7 +14,7 @@
           style="font-size: 14px; padding: 12px"
           onclick="openExpModal()"
         >
-          🧾 Расход кассы
+          🧾 Расход / Терминал
         </button>
       </div>
     </div>
@@ -54,7 +54,7 @@
     </div>
 
     <div class="panel">
-      <h3>Движение по кассе (база 4500 грн)</h3>
+      <h3 id="cash-base-title">Движение по кассе (база 4500 грн)</h3>
       <div id="cash-flow-summary"></div>
     </div>
 
@@ -63,21 +63,52 @@
         <button
           class="btn-outline"
           style="width: 100%; max-width: 100%"
-          onclick="toggleCashSub('matrix')"
+          onclick="toggleCashSub('dispatches')"
         >
-          📊 Сводная таблица сборов с боксов
+          📤 История отправок (с детализацией)
         </button>
-        <!-- <button
+        <button
           class="btn-outline"
           style="width: 100%; max-width: 100%"
-          onclick="toggleCashSub('date')"
+          onclick="toggleCashSub('matrix')"
         >
-          📅 Сводный отчет по конкретной дате
-        </button> -->
+          📊 Таблица сборов (1–5, Пыл, Терм)
+        </button>
       </div>
     </div>
   </div>
 
+  <!-- СПИСОК ВСЕХ ОТПРАВОК -->
+  <div id="cash-dispatches-view" class="hidden">
+    <div class="rep-toolbar no-print">
+      <button class="btn-back" onclick="toggleCashSub('main')">← Назад</button>
+      <button class="btn-print" onclick="window.print()">🖨️ Печать</button>
+    </div>
+    <div class="panel print-area">
+      <h3>История отправок</h3>
+      <div style="font-size: 12px; color: #64748b; margin-bottom: 8px">
+        Нажмите на отправку, чтобы увидеть полный расклад по боксам и
+        компенсациям
+      </div>
+      <div id="dispatches-list-box"></div>
+    </div>
+  </div>
+
+  <!-- ДЕТАЛИЗАЦИЯ КОНКРЕТНОЙ ОТПРАВКИ -->
+  <div id="cash-dispatch-detail-view" class="hidden">
+    <div class="rep-toolbar no-print">
+      <button class="btn-back" onclick="toggleCashSub('dispatches')">
+        ← К списку отправок
+      </button>
+      <button class="btn-print" onclick="window.print()">🖨️ Печать</button>
+    </div>
+    <div class="panel print-area">
+      <h3 id="disp-detail-title">Отправка</h3>
+      <div id="disp-detail-box"></div>
+    </div>
+  </div>
+
+  <!-- КОМПАКТНАЯ ТАБЛИЦА СБОРОВ -->
   <div id="cash-matrix-view" class="hidden">
     <div class="rep-toolbar no-print">
       <button class="btn-back" onclick="toggleCashSub('main')">← Назад</button>
@@ -89,9 +120,12 @@
     </div>
   </div>
 
+  <!-- СВОДКА ЗА КОНКРЕТНУЮ ДАТУ -->
   <div id="cash-tx-view" class="hidden">
     <div class="rep-toolbar no-print">
-      <button class="btn-back" onclick="toggleCashSub('main')">← Назад</button>
+      <button class="btn-back" onclick="toggleCashSub('matrix')">
+        ← К таблице
+      </button>
       <button class="btn-print" onclick="window.print()">🖨️ Печать</button>
     </div>
     <div class="panel print-area">
