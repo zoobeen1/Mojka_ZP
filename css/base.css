@@ -465,3 +465,160 @@ body {
     font-size: 13px;
   }
 }
+/* ==========================================================================
+   УНИФИЦИРОВАННЫЕ СТИЛИ (НОВАЯ ЕДИНАЯ СИСТЕМА КЛАССОВ .u-*)
+   Старые классы выше не удаляем — переводим модули на .u-* постепенно.
+   ========================================================================== */
+
+/* 1. Раскладка и сетки */
+.u-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.u-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.u-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.u-grow {
+  flex: 1;
+}
+.u-mb-sm {
+  margin-bottom: 8px;
+}
+.u-mb-md {
+  margin-bottom: 12px;
+}
+.u-mt-md {
+  margin-top: 12px;
+}
+
+/* 2. Строки списков, балансов и разделители */
+.u-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.u-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.u-item--compact {
+  padding: 6px 0;
+}
+.u-item--sub {
+  border-top: 1px solid #cbd5e1;
+  padding-top: 8px;
+}
+.u-item--total {
+  border-top: 2px solid #cbd5e1;
+  padding-top: 10px;
+}
+.u-dashed {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 12px;
+  color: #475569;
+}
+
+/* 3. Унифицированные поля ввода и селекты */
+.u-input {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 16px;
+  background: #f8fafc;
+  color: var(--text);
+}
+.u-input--sm {
+  width: auto;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 4. Унифицированные кнопки */
+.u-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.u-btn:active {
+  transform: scale(0.98);
+}
+.u-btn--full {
+  width: 100%;
+}
+.u-btn--sm {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.u-btn--green {
+  background: #16a34a;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.2);
+}
+.u-btn--blue {
+  background: var(--primary);
+  color: #fff;
+}
+.u-btn--soft {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1.5px solid #bfdbfe;
+}
+.u-btn--gray {
+  background: #e2e8f0;
+  color: var(--text);
+}
+
+/* 5. Типографика и акценты */
+.u-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.u-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+.u-bold {
+  font-weight: 700;
+}
+.u-heavy {
+  font-weight: 800;
+}
+.u-muted {
+  color: var(--muted);
+}
+.u-red {
+  color: #dc2626;
+}
+.u-green {
+  color: #15803d;
+}
+.u-blue {
+  color: var(--primary);
+}
