@@ -477,7 +477,7 @@ function openDispatchDetail(dispId) {
       <span class="u-heavy txt-lg">${totalBoxes} грн</span>
     </div>
     <div class="u-item u-item--compact u-red">
-      <span class="txt-sm">Компенсация в кассу (Терм: ${termSum}, Расх: ${expSum}, З/П: ${zpSum})</span>
+      <span class="txt-sm">Компенсация в кассу:</span>
       <span class="u-bold txt-md">−${totalComp} грн</span>
     </div>
     <div class="u-item u-item--sub">
