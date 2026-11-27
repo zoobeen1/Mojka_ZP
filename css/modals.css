@@ -1,0 +1,227 @@
+/* Модуль: Модальные окна и калькулятор купюр */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.modal-window {
+  background: #fff;
+  width: 98vw;
+  max-width: 1160px;
+  height: 94vh;
+  max-height: 94vh;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+}
+#exp-modal .modal-window,
+.modal-window.modal-compact {
+  height: auto;
+  max-width: 500px;
+}
+
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: #f8fafc;
+}
+.modal-title {
+  font-weight: 800;
+  font-size: 17px;
+}
+.modal-date-mt {
+  margin-top: 4px;
+}
+.modal-close {
+  font-size: 22px;
+  padding: 4px 8px;
+}
+
+.modal-body {
+  padding: 12px;
+  overflow: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+#exp-modal .modal-body,
+.modal-body.modal-body-scroll {
+  display: block;
+  padding: 14px;
+}
+.modal-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.modal-foot {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  background: #f8fafc;
+}
+.modal-foot .btn-primary {
+  max-width: 360px;
+  margin: 0 auto;
+  display: block;
+}
+
+/* Таблица калькулятора купюр */
+.calc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 560px;
+}
+.calc-table th {
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-weight: 800;
+  padding: 10px 6px;
+  border: 1px solid #cbd5e1;
+  text-align: center;
+  font-size: 14px;
+}
+.calc-table td {
+  border: 1px solid #cbd5e1;
+  padding: 6px 4px;
+  text-align: center;
+}
+.calc-table td.box-col {
+  font-weight: 800;
+  text-align: left;
+  padding-left: 12px;
+  background: #f8fafc;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 95px;
+  font-size: 14px;
+}
+.box-col.bg-money {
+  background: #dcfce7;
+}
+.box-col.bg-bills {
+  background: #fef9c3;
+}
+
+.calc-input {
+  width: 100%;
+  min-width: 52px;
+  padding: 10px 4px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  background: #fff;
+}
+.calc-input:focus {
+  border-color: var(--primary);
+  outline: none;
+  background: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.row-sum {
+  font-weight: 800;
+  color: var(--text);
+  background: #f1f5f9;
+  min-width: 78px;
+  font-size: 15px;
+}
+.tot-money td {
+  background: #dcfce7;
+  color: #14532d;
+  font-weight: 800;
+  padding: 10px 6px;
+  font-size: 15px;
+}
+.tot-bills td {
+  background: #fef9c3;
+  color: #713f12;
+  font-weight: 700;
+  padding: 9px 6px;
+  font-size: 14px;
+}
+
+/* Строки шаблона расписания (Пн–Вс) */
+.tpl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.tpl-day {
+  width: 34px;
+  font-weight: 800;
+  font-size: 14px;
+}
+.tpl-emp {
+  flex: 1;
+  margin-bottom: 0;
+  padding: 8px;
+  font-size: 14px;
+}
+.tpl-rate {
+  width: 86px;
+  margin-bottom: 0;
+  padding: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .modal-overlay {
+    padding: 20px;
+  }
+  .modal-head {
+    padding: 18px 24px;
+  }
+  .modal-body {
+    padding: 20px 24px;
+  }
+  .calc-table {
+    font-size: 16px;
+  }
+  .calc-table th {
+    padding: 14px 10px;
+    font-size: 16px;
+  }
+  .calc-table td {
+    padding: 10px 8px;
+  }
+  .calc-table td.box-col {
+    min-width: 130px;
+    font-size: 16px;
+    padding-left: 16px;
+  }
+  .calc-input {
+    padding: 12px 6px;
+    font-size: 18px;
+    border-radius: 10px;
+  }
+  .row-sum {
+    min-width: 110px;
+    font-size: 17px;
+  }
+  .tot-money td {
+    padding: 14px 10px;
+    font-size: 17px;
+  }
+  .tot-bills td {
+    padding: 12px 10px;
+    font-size: 15px;
+  }
+}

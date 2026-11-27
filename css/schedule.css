@@ -1,0 +1,105 @@
+/* Модуль: График выходов */
+#tab-schedule,
+.schedule-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.grid-span-all {
+  grid-column: 1 / -1;
+}
+
+.shift-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 7px;
+}
+.shift-card.today {
+  border: 2px solid var(--primary);
+  background: #eff6ff;
+}
+.shift-card.is-off {
+  opacity: 0.65;
+  background: #f8fafc;
+}
+
+.date-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 5px;
+}
+.date-main {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+}
+.date-dow {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.today-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.controls-box {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+select.clean-select,
+select.st-select {
+  width: 100%;
+  appearance: none;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+select.clean-select {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: var(--text);
+}
+select.st-select {
+  border: none;
+  font-size: 12px;
+  padding: 5px;
+}
+
+.st-plan {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.st-done {
+  background: #dcfce7;
+  color: #15803d;
+}
+.st-off {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.badge-view {
+  padding: 5px 6px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}

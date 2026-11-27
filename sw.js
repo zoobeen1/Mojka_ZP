@@ -1,21 +1,26 @@
-const CACHE_NAME = "smeny-kassa-v4";
+const CACHE_NAME = "smeny-kassa-v5";
 
 // Полный список всех файлов приложения, которые сохраняются в кэш телефона
 const ASSETS = Array.of(
   "./",
   "./index.html",
-  "./style.css",
+  "./css/base.css",
+  "./css/schedule.css",
+  "./css/cash.css",
+  "./css/modals.css",
+  "./css/notes.css",
   "./config.js",
   "./manifest.json",
+  "./views/schedule.html",
   "./views/cash.html",
   "./views/salary.html",
   "./views/admin.html",
+  "./views/notes.html",
   "./views/modals.html",
   "./js/api.js",
   "./js/schedule.js",
   "./js/cash.js",
   "./js/salary.js",
-  "./views/notes.html",
   "./js/notes.js",
   "./js/main.js"
 );
