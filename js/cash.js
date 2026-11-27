@@ -374,6 +374,7 @@ async function closeCashBatch() {
   });
   await loadData();
 }
+
 // Отрисовка списка всех проведённых отправок из листа Отправки
 function renderDispatchesList() {
   if (!APP_DATA) return;
@@ -389,12 +390,12 @@ function renderDispatchesList() {
   box.innerHTML = list
     .map(
       (d) => `
-    <div class="log-row" style="cursor:pointer;padding:10px 6px;" onclick="openDispatchDetail(${
+    <div class="log-row" style="cursor:pointer;padding:10px 6px;" onclick="openDispatchDetail('${
       d.id
-    })">
+    }')">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <div style="font-weight:800;font-size:15px;color:#2563eb;">Отправка #${
+          <div style="font-weight:800;font-size:15px;color:#2563eb;">Отправка №${
             d.id
           } · ${formatHumanDate(d.date)}</div>
           <div class="log-meta">${d.who}${d.note ? ` · ${d.note}` : ""}</div>
@@ -409,16 +410,18 @@ function renderDispatchesList() {
     .join("");
 }
 
-// Открытие полного расклада выбранной отправки на экране (побоксовка + все скомпенсированные чеки и выплаты)
+// Открытие полного расклада выбранной отправки на экране по её сквозному ID
 function openDispatchDetail(dispId) {
   if (!APP_DATA) return;
-  const disp = (APP_DATA.dispatches || []).find((d) => d.id === dispId);
+  const targetId = String(dispId).trim();
+  const disp = (APP_DATA.dispatches || []).find(
+    (d) => String(d.id).trim() === targetId
+  );
   if (!disp) return;
 
-  const tag = `Отправка #${disp.id}`;
-  document.getElementById(
-    "disp-detail-title"
-  ).textContent = `${tag} от ${formatHumanDate(disp.date)}`;
+  document.getElementById("disp-detail-title").textContent = `Отправка №${
+    disp.id
+  } от ${formatHumanDate(disp.date)}`;
 
   const empMap = {};
   (APP_DATA.employees || []).forEach((e) => (empMap[e.id] = e.name));
@@ -428,16 +431,22 @@ function openDispatchDetail(dispId) {
   let totalBoxes = 0;
 
   (APP_DATA.cash || []).forEach((c) => {
-    if (c.status === tag) {
+    if (String(c.status).trim() === targetId) {
       if (boxSums[c.box] !== undefined) boxSums[c.box] += c.sum;
       else boxSums[c.box] = (boxSums[c.box] || 0) + c.sum;
       totalBoxes += c.sum;
     }
   });
 
-  const termItems = (APP_DATA.terminal || []).filter((t) => t.status === tag);
-  const expItems = (APP_DATA.expenses || []).filter((e) => e.status === tag);
-  const payItems = (APP_DATA.payments || []).filter((p) => p.status === tag);
+  const termItems = (APP_DATA.terminal || []).filter(
+    (t) => String(t.status).trim() === targetId
+  );
+  const expItems = (APP_DATA.expenses || []).filter(
+    (e) => String(e.status).trim() === targetId
+  );
+  const payItems = (APP_DATA.payments || []).filter(
+    (p) => String(p.status).trim() === targetId
+  );
 
   const termSum = termItems.reduce((s, i) => s + i.amount, 0);
   const expSum = expItems.reduce((s, i) => s + i.amount, 0);
@@ -506,6 +515,7 @@ function openDispatchDetail(dispId) {
   document.getElementById("disp-detail-box").innerHTML = html;
   toggleCashSub("dispatch-detail");
 }
+
 // Переход из сводной таблицы сборов в детальный отчёт за выбранный день по клику на строку
 function openDateFromMatrix(isoDate) {
   toggleCashSub("date");
