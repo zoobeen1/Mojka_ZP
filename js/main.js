@@ -21,7 +21,7 @@ function switchFinMode(mode) {
     .getElementById("mode-cash")
     .classList.toggle("hidden", mode !== "cash");
   document
-    .getElementById("mode-salary")
+    .getElementById("mode-fin")
     .classList.toggle("hidden", mode !== "salary");
   document
     .getElementById("seg-cash")
