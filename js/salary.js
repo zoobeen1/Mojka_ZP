@@ -7,18 +7,29 @@ function showFinSub(sub) {
   if (sub === "monthly") initDynamicMonthly();
 }
 
-// Форматирование даты начала недели "YYYY-MM-DD" в короткий вид "16.11"
-function formatWeekFrom(rawVal) {
+// Преобразование любой даты ("2026-11-16", "19.11" или длинного "Mon Nov 16 2026...") в короткий вид "16.11"
+function formatShortCellDate(rawVal) {
   const str = String(rawVal || "").trim();
+  if (!str || str === "—") return "—";
+
+  if (str.includes("GMT") || str.includes("00:00:00")) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      return `${dd}.${mm}`;
+    }
+  }
+
   const startPart = str.split("..").at(0).trim();
   const parts = startPart.split("-");
   if (parts.length === 3) {
-    return `${Number(parts.at(2))}.${parts.at(1)}`;
+    return `${String(Number(parts.at(2))).padStart(2, "0")}.${parts.at(1)}`;
   }
   return str;
 }
 
-// Построение лаконичной таблицы закрытых недель из листа Сводка (без долгов)
+// Построение лаконичной таблицы закрытых недель из листа Сводка (без долгов и длинных дат)
 function buildWeeklyTable(items, empMap) {
   if (!items || !items.length) {
     return "<div style='color:#64748b;font-size:14px;'>Пока нет закрытых недель</div>";
@@ -29,11 +40,11 @@ function buildWeeklyTable(items, empMap) {
     .map(
       (r) => `
     <tr>
-      <td><b>${formatWeekFrom(r.weekFrom)}</b></td>
+      <td><b>${formatShortCellDate(r.weekFrom)}</b></td>
       <td>${empMap[r.empId] || r.empId}</td>
       <td>${r.shifts}</td>
       <td>${r.paid}</td>
-      <td>${r.payDate || "—"}</td>
+      <td>${formatShortCellDate(r.payDate)}</td>
     </tr>
   `
     )
@@ -56,7 +67,6 @@ function buildWeeklyTable(items, empMap) {
     </div>
   `;
 }
-
 // Заполнение выпадающего списка доступных месяцев из фактических смен и выплат
 function initDynamicMonthly() {
   if (!APP_DATA) return;
@@ -159,6 +169,7 @@ function renderDynamicMonthly() {
     </div>
   `;
 }
+
 // Отрисовка живых долгов по зарплате, формы выплаты и недельного отчёта
 function renderSalary(data) {
   const { perms, employees, calendar, payments, summary } = data;
