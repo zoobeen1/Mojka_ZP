@@ -2,21 +2,10 @@
   <div class="modal-window">
     <div class="modal-head">
       <div>
-        <div style="font-weight: 800; font-size: 17px">
-          Сбор выручки с боксов
-        </div>
-        <input
-          type="date"
-          id="cash-date"
-          class="mini-select"
-          style="margin-top: 4px"
-        />
+        <div class="modal-title">Сбор выручки с боксов</div>
+        <input type="date" id="cash-date" class="mini-select modal-date-mt" />
       </div>
-      <button
-        class="logout-btn"
-        style="font-size: 22px; padding: 4px 8px"
-        onclick="closeCashModal()"
-      >
+      <button class="logout-btn modal-close" onclick="closeCashModal()">
         ✕
       </button>
     </div>
@@ -36,18 +25,12 @@
 <div id="exp-modal" class="modal-overlay hidden no-print">
   <div class="modal-window">
     <div class="modal-head">
-      <div style="font-weight: 800; font-size: 17px">
-        Расход из кассы (4500 грн)
-      </div>
-      <button
-        class="logout-btn"
-        style="font-size: 22px; padding: 4px 8px"
-        onclick="closeExpModal()"
-      >
+      <div class="modal-title">Расход из кассы (4500 грн)</div>
+      <button class="logout-btn modal-close" onclick="closeExpModal()">
         ✕
       </button>
     </div>
-    <div class="modal-body" style="padding: 14px">
+    <div class="modal-body modal-body-scroll">
       <input type="date" id="exp-date" class="field" />
       <select id="exp-type" class="field">
         <option value="Терминал (чек)">
@@ -71,6 +54,29 @@
     <div class="modal-foot">
       <button class="btn-primary" onclick="submitExpModal()">
         Записать расход
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="tpl-modal" class="modal-overlay hidden no-print">
+  <div class="modal-window modal-compact">
+    <div class="modal-head">
+      <div class="modal-title">📅 Шаблон расписания (Пн–Вс)</div>
+      <button class="logout-btn modal-close" onclick="closeTemplateModal()">
+        ✕
+      </button>
+    </div>
+    <div class="modal-body modal-body-scroll">
+      <div class="modal-hint">
+        Изменения применятся к новым будущим неделям (текущая неделя не
+        изменится).
+      </div>
+      <div id="tpl-rows-box"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-primary" onclick="saveTemplate()">
+        💾 Сохранить шаблон
       </button>
     </div>
   </div>

@@ -1,4 +1,4 @@
-// Переключение основных вкладок в нижней навигации (График, Финансы, Журнал, Права)
+// Переключение основных вкладок в нижней навигации (График, Финансы, Заметки, Журнал, Права)
 function switchTab(tabId, title, btn) {
   document
     .querySelectorAll(".tab-view")
@@ -9,6 +9,9 @@ function switchTab(tabId, title, btn) {
   document.getElementById(`tab-${tabId}`).classList.remove("hidden");
   btn.classList.add("active");
   document.getElementById("page-title").textContent = title;
+  if (tabId === "schedule" && typeof toggleSchedSub === "function") {
+    toggleSchedSub("main");
+  }
   if (tabId === "finance") {
     showFinSub("main");
     toggleCashSub("main");
@@ -89,6 +92,7 @@ async function savePerms() {
   await apiPost({ action: "save_perms", perms: newPerms });
   await loadData();
 }
+
 // Сохранение нового норматива операционной кассы в лист Настройки
 async function saveSettings() {
   const newBase = Number(document.getElementById("set-cash-base").value);
@@ -96,6 +100,63 @@ async function saveSettings() {
     return alert("Введите корректную сумму норматива");
   document.getElementById("loader").style.display = "block";
   await apiPost({ action: "save_settings", cashBase: newBase });
+  await loadData();
+}
+// Открытие модального окна настройки недельного шаблона смен (Пн–Вс)
+function openTemplateModal() {
+  if (!APP_DATA) return;
+  const DAYS_NAMES = Array.of("", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс");
+  const tplList = APP_DATA.template || [];
+  const emps = APP_DATA.employees || [];
+  const box = document.getElementById("tpl-rows-box");
+
+  box.innerHTML = Array.of(1, 2, 3, 4, 5, 6, 7)
+    .map((dayNum) => {
+      const cur = tplList.find((t) => Number(t.day) === dayNum) || {
+        empId: emps.at(0)?.id || "",
+        rate: 750,
+      };
+      const empOpts = emps
+        .map(
+          (e) =>
+            `<option value="${e.id}" ${
+              String(e.id) === String(cur.empId) ? "selected" : ""
+            }>${e.name}</option>`
+        )
+        .join("");
+
+      return `
+        <div class="tpl-row">
+          <div class="tpl-day">${DAYS_NAMES.at(dayNum)}</div>
+          <select id="tpl-emp-${dayNum}" class="field tpl-emp">${empOpts}</select>
+          <input type="number" id="tpl-rate-${dayNum}" class="field tpl-rate" value="${
+        cur.rate
+      }" placeholder="Ставка">
+        </div>
+      `;
+    })
+    .join("");
+
+  document.getElementById("tpl-modal").classList.remove("hidden");
+}
+
+// Закрытие модального окна шаблона смен
+function closeTemplateModal() {
+  document.getElementById("tpl-modal").classList.add("hidden");
+}
+
+// Сохранение обновлённого шаблона смен (Пн–Вс) в Google Таблицу
+async function saveTemplate() {
+  const rows = [];
+  for (let d = 1; d <= 7; d++) {
+    const empId = document.getElementById(`tpl-emp-${d}`).value;
+    const rate = Number(document.getElementById(`tpl-rate-${d}`).value) || 0;
+    rows.push({ day: d, empId, rate });
+  }
+
+  closeTemplateModal();
+  document.getElementById("loader").style.display = "block";
+  await apiPost({ action: "save_template", rows });
   await loadData();
 }
 

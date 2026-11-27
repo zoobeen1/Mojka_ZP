@@ -604,3 +604,81 @@ body.printing-single .modal-window {
   border: 1px solid #000;
   max-width: 100%;
 }
+/* Чистые классы для настроек и модальных окон */
+.field-label {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.inline-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.field.field-inline {
+  margin-bottom: 0;
+  flex: 1;
+}
+.btn-primary.btn-inline {
+  width: auto;
+  padding: 10px 18px;
+}
+.btn-primary.btn-blue {
+  background: var(--primary);
+}
+.btn-mt {
+  margin-top: 12px;
+}
+.btn-full {
+  width: 100%;
+  max-width: 100%;
+}
+.modal-window.modal-compact {
+  height: auto;
+  max-width: 500px;
+}
+.modal-title {
+  font-weight: 800;
+  font-size: 17px;
+}
+.modal-date-mt {
+  margin-top: 4px;
+}
+.modal-close {
+  font-size: 22px;
+  padding: 4px 8px;
+}
+.modal-body.modal-body-scroll {
+  display: block;
+  padding: 14px;
+}
+.modal-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.tpl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.tpl-day {
+  width: 34px;
+  font-weight: 800;
+  font-size: 14px;
+}
+.tpl-emp {
+  flex: 1;
+  margin-bottom: 0;
+  padding: 8px;
+  font-size: 14px;
+}
+.tpl-rate {
+  width: 86px;
+  margin-bottom: 0;
+  padding: 8px;
+  font-size: 14px;
+  text-align: center;
+}
