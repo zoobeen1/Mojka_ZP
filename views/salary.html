@@ -1,54 +1,65 @@
-<div id="mode-salary" class="hidden">
+<div id="mode-fin">
   <div id="fin-main">
     <div class="panel">
-      <h3>Текущий долг по зарплате</h3>
+      <h3>Текущие долги (грн)</h3>
       <div id="balance-list"></div>
     </div>
+
     <div class="panel hidden" id="payment-card">
-      <h3>Выплата ЗП из кассы</h3>
+      <h3>Выплата зарплаты</h3>
       <select id="pay-emp" class="field"></select>
       <input type="date" id="pay-date" class="field" />
       <input
         type="number"
         id="pay-amount"
         class="field"
-        placeholder="Сумма выплаты"
+        placeholder="Сумма, грн"
       />
-      <button class="btn-primary" onclick="addPayment()">
-        Записать выплату
-      </button>
+      <button class="btn-primary" onclick="addPayment()">Выплатить</button>
     </div>
-    <div class="panel">
-      <h3>Отчеты по зарплате</h3>
-      <div class="rep-grid">
-        <button class="btn-outline" onclick="showFinSub('weekly')">
-          📊 За неделю
-        </button>
-        <button class="btn-outline" onclick="showFinSub('monthly')">
-          📆 За месяц
-        </button>
-      </div>
+
+    <div class="rep-grid">
+      <button class="btn-outline" onclick="showFinSub('weekly')">
+        📅 Отчёт за неделю
+      </button>
+      <button class="btn-outline" onclick="showFinSub('monthly')">
+        📆 Отчёт за месяц
+      </button>
     </div>
   </div>
 
   <div id="fin-weekly" class="hidden">
-    <div class="rep-toolbar no-print">
+    <div class="rep-toolbar">
       <button class="btn-back" onclick="showFinSub('main')">← Назад</button>
       <button class="btn-print" onclick="window.print()">🖨️ Печать</button>
     </div>
     <div class="panel print-area">
-      <h3>Отчет по закрытым неделям</h3>
+      <h3>Отчёт за неделю</h3>
       <div id="summary-list"></div>
     </div>
   </div>
 
   <div id="fin-monthly" class="hidden">
-    <div class="rep-toolbar no-print">
+    <div class="rep-toolbar">
       <button class="btn-back" onclick="showFinSub('main')">← Назад</button>
       <button class="btn-print" onclick="window.print()">🖨️ Печать</button>
     </div>
     <div class="panel print-area">
-      <h3>Отчет по закрытым месяцам</h3>
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        "
+      >
+        <h3 style="margin: 0">Отчёт за месяц</h3>
+        <select
+          id="fin-month-select"
+          class="mini-select no-print"
+          onchange="renderDynamicMonthly()"
+        ></select>
+      </div>
       <div id="monthly-list"></div>
     </div>
   </div>

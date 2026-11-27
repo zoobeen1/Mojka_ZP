@@ -1,107 +1,42 @@
-// Переключение экранов внутри вкладки З/П (главная, отчёт за неделю, отчёт за месяц)
+// Переключение экранов внутри вкладки З/П (главная, отчёт за неделю, динамический отчёт за месяц)
 function showFinSub(sub) {
   document.getElementById("fin-main").classList.add("hidden");
   document.getElementById("fin-weekly").classList.add("hidden");
   document.getElementById("fin-monthly").classList.add("hidden");
   document.getElementById(`fin-${sub}`).classList.remove("hidden");
+  if (sub === "monthly") initDynamicMonthly();
 }
 
-// Сокращение строки периода вида "2026-11-16 .. 2026-11-22" до "16.11"
-function formatShortPeriod(rawVal, periodKey) {
+// Форматирование даты начала недели "YYYY-MM-DD" в короткий вид "16.11"
+function formatWeekFrom(rawVal) {
   const str = String(rawVal || "").trim();
-  if (periodKey === "period") {
-    const startPart = str.split("..").at(0).trim();
-    const parts = startPart.split("-");
-    if (parts.length === 3) {
-      return `${Number(parts.at(2))}.${parts.at(1)}`;
-    }
+  const startPart = str.split("..").at(0).trim();
+  const parts = startPart.split("-");
+  if (parts.length === 3) {
+    return `${Number(parts.at(2))}.${parts.at(1)}`;
   }
   return str;
 }
 
-// Построение таблицы для закрытых недельных и месячных отчётов с детализацией выплат и остатка долга на дату выплаты
-function buildReportTable(items, periodKey, empMap, calendar, payments) {
+// Построение лаконичной таблицы закрытых недель из листа Сводка (без долгов)
+function buildWeeklyTable(items, empMap) {
   if (!items || !items.length) {
-    return "<div style='color:#64748b;font-size:14px;'>Пока нет закрытых периодов</div>";
+    return "<div style='color:#64748b;font-size:14px;'>Пока нет закрытых недель</div>";
   }
-
   const rowsHtml = items
     .slice()
     .reverse()
-    .map((r) => {
-      let paySubRow = "";
-
-      // Для недельного отчёта ("period") выводим под строкой конкретные выплаты и остаток долга сразу после выплаты
-      if (
-        periodKey === "period" &&
-        Array.isArray(payments) &&
-        Array.isArray(calendar)
-      ) {
-        const parts = String(r.period || "")
-          .split("..")
-          .map((s) => s.trim());
-        const startDate = parts.at(0) || "";
-        const endDate = parts.at(1) || "";
-
-        const weekPays = payments
-          .filter(
-            (p) =>
-              String(p.empId).trim() === String(r.empId).trim() &&
-              p.date >= startDate &&
-              p.date <= endDate
-          )
-          .sort((a, b) => a.date.localeCompare(b.date));
-
-        if (weekPays.length) {
-          const payBadges = weekPays
-            .map((pay) => {
-              const earnedUntilPay = calendar
-                .filter(
-                  (c) =>
-                    String(c.empId).trim() === String(r.empId).trim() &&
-                    c.status === "Отработано" &&
-                    c.date <= pay.date
-                )
-                .reduce((sum, c) => sum + (Number(c.rate) || 0), 0);
-
-              const paidUntilPay = payments
-                .filter(
-                  (p) =>
-                    String(p.empId).trim() === String(r.empId).trim() &&
-                    p.date <= pay.date
-                )
-                .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-
-              const debtAtPay = earnedUntilPay - paidUntilPay;
-              const debtColor = debtAtPay <= 0 ? "#15803d" : "#dc2626";
-              return `💸 <b>${formatHumanDate(pay.date)}</b>: выплачено <b>${
-                pay.amount
-              } грн</b> → остаток на момент выплаты: <b style="color:${debtColor};">${debtAtPay} грн</b>`;
-            })
-            .join("<br>");
-
-          paySubRow = `
-            <tr style="background:#f8fafc;">
-              <td colspan="6" style="text-align:left;font-size:12px;color:#334155;padding:6px 8px;border-bottom:2px solid #cbd5e1;">
-                ${payBadges}
-              </td>
-            </tr>
-          `;
-        }
-      }
-
-      return `
-        <tr>
-          <td><b>${formatShortPeriod(r[periodKey], periodKey)}</b></td>
-          <td>${empMap[r.empId] || r.empId}</td>
-          <td>${r.shifts}</td>
-          <td>${r.earned}</td>
-          <td>${r.paid}</td>
-          <td><b>${r.debt}</b></td>
-        </tr>
-        ${paySubRow}
-      `;
-    })
+    .map(
+      (r) => `
+    <tr>
+      <td><b>${formatWeekFrom(r.weekFrom)}</b></td>
+      <td>${empMap[r.empId] || r.empId}</td>
+      <td>${r.shifts}</td>
+      <td>${r.paid}</td>
+      <td>${r.payDate || "—"}</td>
+    </tr>
+  `
+    )
     .join("");
 
   return `
@@ -109,12 +44,11 @@ function buildReportTable(items, periodKey, empMap, calendar, payments) {
       <table class="rep-table">
         <thead>
           <tr>
-            <th>Период</th>
+            <th>Неделя от</th>
             <th>Сотрудник</th>
             <th>Смен</th>
-            <th>Начисл.</th>
             <th>Выпл.</th>
-            <th>Остаток</th>
+            <th>Дата выпл.</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>
@@ -122,9 +56,112 @@ function buildReportTable(items, periodKey, empMap, calendar, payments) {
     </div>
   `;
 }
-// Отрисовка текущих долгов по зарплате, списка сотрудников для выплаты и архивных таблиц
+
+// Заполнение выпадающего списка доступных месяцев из фактических смен и выплат
+function initDynamicMonthly() {
+  if (!APP_DATA) return;
+  const MONTHS_FULL = Array.of(
+    "Январь",
+    "Февраль",
+    "Март",
+    "Апрель",
+    "Май",
+    "Июнь",
+    "Июль",
+    "Август",
+    "Сентябрь",
+    "Октябрь",
+    "Ноябрь",
+    "Декабрь"
+  );
+  const ymSet = new Set();
+
+  (APP_DATA.calendar || []).forEach((c) => {
+    if (c.status === "Отработано" && c.date) ymSet.add(c.date.slice(0, 7));
+  });
+  (APP_DATA.payments || []).forEach((p) => {
+    if (p.date) ymSet.add(p.date.slice(0, 7));
+  });
+
+  const sortedYm = Array.from(ymSet).sort().reverse();
+  const sel = document.getElementById("fin-month-select");
+  if (!sortedYm.length) {
+    sel.innerHTML = `<option value="">Нет данных</option>`;
+    document.getElementById("monthly-list").innerHTML =
+      "<div style='color:#64748b;font-size:14px;'>Пока нет отработанных смен</div>";
+    return;
+  }
+
+  sel.innerHTML = sortedYm
+    .map((ym) => {
+      const p = ym.split("-");
+      const label = `${MONTHS_FULL.at(Number(p.at(1)) - 1) || p.at(1)} ${p.at(
+        0
+      )}`;
+      return `<option value="${ym}">${label}</option>`;
+    })
+    .join("");
+
+  renderDynamicMonthly();
+}
+
+// Динамический расчёт отчёта за выбранный месяц по фактическим сменам и выплатам (без хранения долга)
+function renderDynamicMonthly() {
+  const ym = document.getElementById("fin-month-select").value;
+  if (!ym || !APP_DATA) return;
+
+  const rowsHtml = (APP_DATA.employees || [])
+    .map((emp) => {
+      const shifts = (APP_DATA.calendar || []).filter(
+        (c) =>
+          String(c.empId).trim() === String(emp.id).trim() &&
+          c.status === "Отработано" &&
+          c.date.startsWith(ym)
+      ).length;
+
+      let paid = 0;
+      const dates = [];
+      (APP_DATA.payments || []).forEach((p) => {
+        if (
+          String(p.empId).trim() === String(emp.id).trim() &&
+          p.date.startsWith(ym)
+        ) {
+          paid += Number(p.amount) || 0;
+          const dp = p.date.split("-");
+          if (dp.length === 3) dates.push(`${Number(dp.at(2))}.${dp.at(1)}`);
+        }
+      });
+
+      return `
+        <tr>
+          <td><b>${emp.name}</b></td>
+          <td>${shifts}</td>
+          <td>${paid}</td>
+          <td>${dates.length ? dates.join(", ") : "—"}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  document.getElementById("monthly-list").innerHTML = `
+    <div class="table-wrap">
+      <table class="rep-table">
+        <thead>
+          <tr>
+            <th>Сотрудник</th>
+            <th>Смен</th>
+            <th>Выпл.</th>
+            <th>Даты выпл.</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
+}
+// Отрисовка живых долгов по зарплате, формы выплаты и недельного отчёта
 function renderSalary(data) {
-  const { perms, employees, calendar, payments, summary, monthly } = data;
+  const { perms, employees, calendar, payments, summary } = data;
   const empMap = {};
   employees.forEach((e) => (empMap[e.id] = e.name));
 
@@ -152,19 +189,9 @@ function renderSalary(data) {
       `;
     });
 
-    document.getElementById("summary-list").innerHTML = buildReportTable(
+    document.getElementById("summary-list").innerHTML = buildWeeklyTable(
       summary,
-      "period",
-      empMap,
-      calendar,
-      payments
-    );
-    document.getElementById("monthly-list").innerHTML = buildReportTable(
-      monthly,
-      "month",
-      empMap,
-      calendar,
-      payments
+      empMap
     );
   }
 
