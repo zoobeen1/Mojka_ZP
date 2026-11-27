@@ -1,35 +1,20 @@
 <div id="mode-cash">
   <div id="cash-main-view">
     <div class="panel no-print hidden" id="cash-add-box">
-      <div class="rep-grid" style="margin-top: 0">
-        <button
-          class="btn-primary"
-          style="font-size: 14px; padding: 12px"
-          onclick="openCashModal()"
-        >
+      <div class="rep-grid grid-flush">
+        <button class="btn-primary btn-compact" onclick="openCashModal()">
           ➕ Сбор с боксов
         </button>
-        <button
-          class="btn-outline"
-          style="font-size: 14px; padding: 12px"
-          onclick="openExpModal()"
-        >
+        <button class="btn-outline btn-compact" onclick="openExpModal()">
           🧾 Расход / Терминал
         </button>
       </div>
     </div>
 
     <div class="panel">
-      <div
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-        "
-      >
-        <h3 style="margin: 0">Сводка и расчет</h3>
-        <div style="display: flex; gap: 6px; align-items: center">
+      <div class="panel-head">
+        <h3 class="panel-title">Сводка и расчет</h3>
+        <div class="toolbar-inline">
           <select
             id="cash-period"
             class="mini-select no-print"
@@ -41,11 +26,7 @@
             <option value="month">Архив: Месяц</option>
             <option value="all">Архив: Всё время</option>
           </select>
-          <button
-            class="btn-print no-print"
-            style="padding: 6px 10px; font-size: 13px"
-            onclick="window.print()"
-          >
+          <button class="btn-print btn-icon no-print" onclick="window.print()">
             🖨️
           </button>
         </div>
@@ -59,19 +40,14 @@
     </div>
 
     <div class="panel no-print">
-      <div style="display: flex; flex-direction: column; gap: 10px">
+      <div class="stack-col">
         <button
-          class="btn-outline"
-          style="width: 100%; max-width: 100%"
+          class="btn-outline btn-full"
           onclick="toggleCashSub('dispatches')"
         >
           📤 История отправок (с детализацией)
         </button>
-        <button
-          class="btn-outline"
-          style="width: 100%; max-width: 100%"
-          onclick="toggleCashSub('matrix')"
-        >
+        <button class="btn-outline btn-full" onclick="toggleCashSub('matrix')">
           📊 Таблица сборов (1–5, Пыл)
         </button>
       </div>
@@ -86,7 +62,7 @@
     </div>
     <div class="panel print-area">
       <h3>История отправок</h3>
-      <div style="font-size: 12px; color: #64748b; margin-bottom: 8px">
+      <div class="panel-hint">
         Нажмите на отправку, чтобы увидеть полный расклад по боксам и
         компенсациям
       </div>
@@ -129,15 +105,8 @@
       <button class="btn-print" onclick="window.print()">🖨️ Печать</button>
     </div>
     <div class="panel print-area">
-      <div
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 12px;
-        "
-      >
-        <h3 style="margin: 0">Сводка за дату</h3>
+      <div class="panel-head panel-head-lg">
+        <h3 class="panel-title">Сводка за дату</h3>
         <select
           id="tx-date-select"
           class="mini-select"

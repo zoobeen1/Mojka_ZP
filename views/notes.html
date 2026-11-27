@@ -3,18 +3,9 @@
   <div id="notes-main-view">
     <div class="panel" id="note-add-panel">
       <h3>Новая заметка</h3>
-      <div style="display: flex; gap: 8px; margin-bottom: 10px">
-        <input
-          type="date"
-          id="note-date"
-          class="field"
-          style="margin-bottom: 0; flex: 1"
-        />
-        <select
-          id="note-target"
-          class="field"
-          style="margin-bottom: 0; flex: 1"
-        >
+      <div class="inline-row inline-row-sm">
+        <input type="date" id="note-date" class="field field-inline" />
+        <select id="note-target" class="field field-inline">
           <option value="Общее">Общее (мойка)</option>
           <option value="Бокс 1">Бокс 1</option>
           <option value="Бокс 2">Бокс 2</option>
@@ -43,32 +34,18 @@
     </div>
 
     <div class="panel">
-      <div
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 8px;
-        "
-      >
-        <h3 style="margin: 0">Свежие события</h3>
-        <span
-          style="font-size: 12px; color: #64748b"
-          id="notes-active-count"
-        ></span>
+      <div class="panel-head panel-head-sm">
+        <h3 class="panel-title">Свежие события</h3>
+        <span class="muted-caption" id="notes-active-count"></span>
       </div>
-      <div style="font-size: 12px; color: #64748b; margin-bottom: 8px">
+      <div class="panel-hint">
         Показаны нерешённые проблемы и последние записи
       </div>
       <div id="notes-recent-list"></div>
     </div>
 
     <div class="panel no-print">
-      <button
-        class="btn-outline"
-        style="width: 100%; max-width: 100%"
-        onclick="toggleNotesSub('archive')"
-      >
+      <button class="btn-outline btn-full" onclick="toggleNotesSub('archive')">
         🗂️ Архив всех заметок (фильтры и дата)
       </button>
     </div>
@@ -83,20 +60,11 @@
 
     <div class="panel print-area">
       <h3>Архив заметок по мойке</h3>
-      <div
-        class="no-print"
-        style="
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          margin-bottom: 12px;
-        "
-      >
-        <div style="display: flex; gap: 8px">
+      <div class="filter-stack no-print">
+        <div class="filter-row">
           <select
             id="arch-status"
-            class="mini-select"
-            style="flex: 1"
+            class="mini-select flex-1"
             onchange="renderNotesArchive()"
           >
             <option value="all" selected>Все типы</option>
@@ -106,8 +74,7 @@
           </select>
           <select
             id="arch-target"
-            class="mini-select"
-            style="flex: 1"
+            class="mini-select flex-1"
             onchange="renderNotesArchive()"
           >
             <option value="all" selected>Все посты</option>
@@ -121,17 +88,15 @@
             <option value="Терминал / Касса">Терминал / Касса</option>
           </select>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center">
+        <div class="filter-row filter-row-center">
           <input
             type="date"
             id="arch-date"
-            class="mini-select"
-            style="flex: 1"
+            class="mini-select flex-1"
             onchange="renderNotesArchive()"
           />
           <button
-            class="logout-btn"
-            style="color: #2563eb; font-size: 13px; padding: 6px 10px"
+            class="logout-btn btn-link-blue"
             onclick="resetNotesArchiveFilters()"
           >
             Сбросить дату

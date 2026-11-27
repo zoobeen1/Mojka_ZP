@@ -1,19 +1,15 @@
 <div id="tab-schedule" class="tab-view">
-  <div id="sched-main-view" style="grid-column: 1 / -1">
-    <div
-      id="schedule-list"
-      style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px"
-    ></div>
+  <div id="sched-main-view" class="grid-span-all">
+    <div id="schedule-list" class="schedule-grid"></div>
     <button
-      class="btn-outline no-print"
-      style="margin-top: 12px; width: 100%; max-width: 100%"
+      class="btn-outline btn-full btn-mt no-print"
       onclick="toggleSchedSub('weeks')"
     >
       📊 Отчёт по отработанным неделям
     </button>
   </div>
 
-  <div id="sched-weeks-view" class="hidden" style="grid-column: 1 / -1">
+  <div id="sched-weeks-view" class="hidden grid-span-all">
     <div class="rep-toolbar no-print">
       <button class="btn-back" onclick="toggleSchedSub('main')">
         ← Назад к графику
@@ -21,15 +17,8 @@
       <button class="btn-print" onclick="window.print()">🖨️ Печать</button>
     </div>
     <div class="panel print-area">
-      <div
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-        "
-      >
-        <h3 style="margin: 0">Отработанные недели</h3>
+      <div class="panel-head">
+        <h3 class="panel-title">Отработанные недели</h3>
         <select
           id="sched-week-filter"
           class="mini-select no-print"
