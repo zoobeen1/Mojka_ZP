@@ -6,6 +6,7 @@ if (!secretKey) {
   if (secretKey) localStorage.setItem("app_pass", secretKey);
 }
 
+// Получение текущей даты в формате YYYY-MM-DD
 function getLocalToday() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
@@ -14,6 +15,7 @@ function getLocalToday() {
   )}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// Форматирование даты YYYY-MM-DD в человекочитаемый вид ("27 Ноября")
 function formatHumanDate(isoDate) {
   const parts = isoDate.split("-");
   return `${Number(parts.at(2))} ${
@@ -21,11 +23,13 @@ function formatHumanDate(isoDate) {
   }`;
 }
 
+// Выход из аккаунта и очистка сохранённого ключа
 function logout() {
   localStorage.removeItem("app_pass");
   location.reload();
 }
 
+// Отправка POST-запроса на сервер Google Apps Script
 async function apiPost(payload) {
   const res = await fetch(API_URL, {
     method: "POST",
@@ -34,6 +38,7 @@ async function apiPost(payload) {
   return res.json();
 }
 
+// Смена пароля текущего пользователя
 async function changePassword() {
   const newPass = prompt("Введите новый пароль (минимум 3 символа):");
   if (!newPass) return;
@@ -57,8 +62,10 @@ async function changePassword() {
   document.getElementById("loader").style.display = "none";
 }
 
+// Параллельная загрузка всех HTML-шаблонов из папки views/
 async function loadViews() {
   const parts = Array.of(
+    ["slot-schedule", "views/schedule.html"],
     ["slot-cash", "views/cash.html"],
     ["slot-salary", "views/salary.html"],
     ["slot-admin", "views/admin.html"],
@@ -73,6 +80,7 @@ async function loadViews() {
   );
 }
 
+// Загрузка актуальных данных из Google Таблицы и запуск отрисовки интерфейса
 async function loadData() {
   if (!secretKey) return;
   document.getElementById("loader").style.display = "block";

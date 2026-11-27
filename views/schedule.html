@@ -1,0 +1,39 @@
+<div id="tab-schedule" class="tab-view">
+  <div id="sched-main-view">
+    <div id="schedule-list"></div>
+    <button
+      class="btn-outline no-print"
+      style="margin-top: 8px"
+      onclick="toggleSchedSub('weeks')"
+    >
+      📊 Отчёт по отработанным неделям
+    </button>
+  </div>
+
+  <div id="sched-weeks-view" class="hidden">
+    <div class="rep-toolbar no-print">
+      <button class="btn-back" onclick="toggleSchedSub('main')">
+        ← Назад к графику
+      </button>
+      <button class="btn-print" onclick="window.print()">🖨️ Печать</button>
+    </div>
+    <div class="panel print-area">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        "
+      >
+        <h3 style="margin: 0">Отработанные недели</h3>
+        <select
+          id="sched-week-filter"
+          class="mini-select no-print"
+          onchange="renderWeeklyScheduleReport()"
+        ></select>
+      </div>
+      <div id="sched-weeks-box"></div>
+    </div>
+  </div>
+</div>
