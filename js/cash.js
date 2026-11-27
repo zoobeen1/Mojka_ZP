@@ -516,7 +516,7 @@ function openDateFromMatrix(isoDate) {
   }
 }
 
-// Отрисовка компактной шахматной таблицы сборов (1-5, Пыл, Терм, Сумм) с группировкой по месяцам и годам
+// Отрисовка компактной таблицы сборов (1-5, Пыл, Сумм) с группировкой по месяцам и годам
 function renderMatrixTable() {
   if (!APP_DATA) return;
   const MONTHS_FULL = Array.of(
@@ -536,8 +536,7 @@ function renderMatrixTable() {
   const byDate = {};
 
   const ensureDate = (d) => {
-    if (!byDate[d])
-      byDate[d] = { b1: 0, b2: 0, b3: 0, b4: 0, b5: 0, pil: 0, term: 0 };
+    if (!byDate[d]) byDate[d] = { b1: 0, b2: 0, b3: 0, b4: 0, b5: 0, pil: 0 };
   };
 
   (APP_DATA.cash || []).forEach((c) => {
@@ -549,12 +548,6 @@ function renderMatrixTable() {
     else if (c.box === "Бокс 4") byDate[c.date].b4 += c.sum;
     else if (c.box === "Бокс 5") byDate[c.date].b5 += c.sum;
     else if (c.box === "Пилосос") byDate[c.date].pil += c.sum;
-  });
-
-  (APP_DATA.terminal || []).forEach((t) => {
-    if (t.pending) return;
-    ensureDate(t.date);
-    byDate[t.date].term += t.amount;
   });
 
   const dates = Object.keys(byDate).sort().reverse();
@@ -572,16 +565,7 @@ function renderMatrixTable() {
     byMonth[ym].push(d);
   });
 
-  const grandTot = {
-    b1: 0,
-    b2: 0,
-    b3: 0,
-    b4: 0,
-    b5: 0,
-    pil: 0,
-    term: 0,
-    all: 0,
-  };
+  const grandTot = { b1: 0, b2: 0, b3: 0, b4: 0, b5: 0, pil: 0, all: 0 };
   let bodyHtml = "";
 
   Object.keys(byMonth)
@@ -592,33 +576,23 @@ function renderMatrixTable() {
       const mTitle = `${MONTHS_FULL.at(Number(p.at(1)) - 1) || p.at(1)} ${p.at(
         0
       )}`;
-      const mTot = {
-        b1: 0,
-        b2: 0,
-        b3: 0,
-        b4: 0,
-        b5: 0,
-        pil: 0,
-        term: 0,
-        all: 0,
-      };
+      const mTot = { b1: 0, b2: 0, b3: 0, b4: 0, b5: 0, pil: 0, all: 0 };
 
       bodyHtml += `
       <tr style="background:#eff6ff;color:#1e3a8a;font-weight:800;">
-        <td colspan="9" style="text-align:left;padding:8px 6px;font-size:13px;">📅 ${mTitle}</td>
+        <td colspan="8" style="text-align:left;padding:8px 6px;font-size:13px;">📅 ${mTitle}</td>
       </tr>
     `;
 
       byMonth[ym].forEach((d) => {
         const r = byDate[d];
-        const rowSum = r.b1 + r.b2 + r.b3 + r.b4 + r.b5 + r.pil + r.term;
+        const rowSum = r.b1 + r.b2 + r.b3 + r.b4 + r.b5 + r.pil;
         mTot.b1 += r.b1;
         mTot.b2 += r.b2;
         mTot.b3 += r.b3;
         mTot.b4 += r.b4;
         mTot.b5 += r.b5;
         mTot.pil += r.pil;
-        mTot.term += r.term;
         mTot.all += rowSum;
 
         const dp = d.split("-");
@@ -632,7 +606,6 @@ function renderMatrixTable() {
           <td>${r.b4 || "-"}</td>
           <td>${r.b5 || "-"}</td>
           <td>${r.pil || "-"}</td>
-          <td>${r.term || "-"}</td>
           <td><b>${rowSum}</b></td>
         </tr>
       `;
@@ -647,7 +620,6 @@ function renderMatrixTable() {
         <td>${mTot.b4}</td>
         <td>${mTot.b5}</td>
         <td>${mTot.pil}</td>
-        <td>${mTot.term}</td>
         <td>${mTot.all}</td>
       </tr>
     `;
@@ -658,7 +630,6 @@ function renderMatrixTable() {
       grandTot.b4 += mTot.b4;
       grandTot.b5 += mTot.b5;
       grandTot.pil += mTot.pil;
-      grandTot.term += mTot.term;
       grandTot.all += mTot.all;
     });
 
@@ -671,7 +642,6 @@ function renderMatrixTable() {
       <td>${grandTot.b4}</td>
       <td>${grandTot.b5}</td>
       <td>${grandTot.pil}</td>
-      <td>${grandTot.term}</td>
       <td>${grandTot.all}</td>
     </tr>
   `;
@@ -688,7 +658,6 @@ function renderMatrixTable() {
             <th>4</th>
             <th>5</th>
             <th>Пыл</th>
-            <th>Терм</th>
             <th>Сумм</th>
           </tr>
         </thead>
