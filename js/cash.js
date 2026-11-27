@@ -150,7 +150,7 @@ function matchPeriod(item, period, todayStr, monDate, monthPrefix) {
   return true;
 }
 
-// Живой пересчёт суммы компенсации и итога к отправке при снятии/установке галочек
+// Живой пересчёт расчётной суммы и автоподстановка в поле фактической отправки при изменении галочек
 function recalcDispatchPreview() {
   const totalBoxes =
     Number(document.getElementById("disp-boxes-total")?.dataset.val) || 0;
@@ -164,12 +164,15 @@ function recalcDispatchPreview() {
   const netToSend = totalBoxes - selectedComp;
   const compEl = document.getElementById("disp-comp-val");
   const netEl = document.getElementById("disp-net-val");
+  const factInput = document.getElementById("disp-fact-amount");
   const cashRemainEl = document.getElementById("disp-cash-remain");
 
   if (compEl) compEl.textContent = `−${selectedComp} грн`;
   if (netEl) netEl.textContent = `${netToSend} грн`;
+  if (factInput) factInput.value = netToSend;
   if (cashRemainEl) cashRemainEl.textContent = `${cashBase - selectedComp} грн`;
 }
+
 // Отрисовка сводки выручки по боксам и списка чеков/выплат с галочками для гибкой компенсации
 function renderCashStats() {
   if (!APP_DATA) return;
@@ -251,10 +254,14 @@ function renderCashStats() {
     (totalBoxes > 0 || totalComp > 0)
   ) {
     boxHtml += `
-      <input type="text" id="disp-note" class="field no-print" style="margin-top:10px;margin-bottom:8px;" placeholder="Примечание к отправке (необязательно)">
-      <button class="btn-primary no-print" style="background:#2563eb;" onclick="closeCashBatch()">
-        ✅ Провести отправку
-      </button>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1;" class="no-print">
+        <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Фактически отправлено, грн (можно исправить при расхождении):</div>
+        <input type="number" id="disp-fact-amount" class="field" style="margin-bottom:8px;font-weight:800;font-size:16px;" value="${netToSend}">
+        <input type="text" id="disp-note" class="field" style="margin-bottom:8px;" placeholder="Примечание к отправке (необязательно)">
+        <button class="btn-primary" style="background:#2563eb;" onclick="closeCashBatch()">
+          ✅ Провести отправку
+        </button>
+      </div>
     `;
   }
 
@@ -338,7 +345,7 @@ function renderCashStats() {
   document.getElementById("cash-flow-summary").innerHTML = flowHtml;
 }
 
-// Проведение отправки: фиксирует сумму в лист Отправки и привязывает отмеченные галочкой расходы к этой отправке
+// Проведение отправки: фиксирует фактическую сумму в лист Отправки и привязывает отмеченные галочкой расходы
 async function closeCashBatch() {
   const totalBoxes =
     Number(document.getElementById("disp-boxes-total")?.dataset.val) || 0;
@@ -359,8 +366,16 @@ async function closeCashBatch() {
     else if (kind === "pay") payRows.push(rowNum);
   });
 
-  const netAmount = totalBoxes - selectedComp;
-  const msg = `Провести отправку?\n\n• Собрано с боксов: ${totalBoxes} грн\n• Компенсация в кассу: ${selectedComp} грн\n• ИТОГО К ОТПРАВКЕ: ${netAmount} грн`;
+  const calcNet = totalBoxes - selectedComp;
+  const factInput = document.getElementById("disp-fact-amount");
+  const netAmount =
+    factInput && factInput.value !== "" ? Number(factInput.value) : calcNet;
+  const diff = netAmount - calcNet;
+
+  let msg = `Провести отправку?\n\n• Собрано с боксов: ${totalBoxes} грн\n• Компенсация в кассу: ${selectedComp} грн\n• Должно отправиться: ${calcNet} грн\n• ФАКТИЧЕСКИ ОТПРАВЛЕНО: ${netAmount} грн`;
+  if (diff !== 0) {
+    msg += `\n• Разница: ${diff > 0 ? "+" : ""}${diff} грн`;
+  }
   if (!confirm(msg)) return;
 
   document.getElementById("loader").style.display = "block";
@@ -410,7 +425,7 @@ function renderDispatchesList() {
     .join("");
 }
 
-// Открытие полного расклада выбранной отправки на экране по её сквозному ID
+// Открытие полного расклада выбранной отправки: побоксовка, вычеты, расчётная сумма, факт и разница
 function openDispatchDetail(dispId) {
   if (!APP_DATA) return;
   const targetId = String(dispId).trim();
@@ -453,6 +468,10 @@ function openDispatchDetail(dispId) {
   const zpSum = payItems.reduce((s, i) => s + i.amount, 0);
   const totalComp = termSum + expSum + zpSum;
 
+  const expectedNet = totalBoxes - totalComp;
+  const factNet = Number(disp.amount) || 0;
+  const diff = factNet - expectedNet;
+
   let html = Object.keys(boxSums)
     .map(
       (b) => `
@@ -473,9 +492,21 @@ function openDispatchDetail(dispId) {
       <span style="font-size:14px;">Компенсация в кассу (Терм: ${termSum}, Расх: ${expSum}, З/П: ${zpSum})</span>
       <span style="font-weight:700;font-size:15px;">−${totalComp} грн</span>
     </div>
-    <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:10px;">
-      <span style="font-weight:800;font-size:16px;">ОТПРАВЛЕНО ЧИСТЫМИ</span>
-      <span class="debt-val ok" style="font-size:18px;">${disp.amount} грн</span>
+    <div class="emp-bal" style="border-top:1px solid #cbd5e1;padding-top:8px;">
+      <span style="font-size:14px;color:#475569;">Должно отправиться (за вычетами)</span>
+      <span style="font-weight:700;font-size:15px;">${expectedNet} грн</span>
+    </div>
+    <div class="emp-bal" style="padding:6px 0;">
+      <span style="font-weight:800;font-size:16px;">ФАКТИЧЕСКИ ОТПРАВЛЕНО</span>
+      <span class="debt-val ok" style="font-size:18px;">${factNet} грн</span>
+    </div>
+    <div class="emp-bal" style="border-top:2px solid #cbd5e1;padding-top:8px;">
+      <span style="font-weight:700;font-size:14px;">Разница (факт − расчёт)</span>
+      <span style="font-weight:800;font-size:15px;color:${
+        diff === 0 ? "#15803d" : "#dc2626"
+      };">
+        ${diff === 0 ? "0 грн (Сошлось)" : `${diff > 0 ? "+" : ""}${diff} грн`}
+      </span>
     </div>
   `;
 
